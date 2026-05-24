@@ -706,7 +706,7 @@ export default function MortgageCalculator() {
     // Update document title dynamically for SEO
     const updateTitle = () => {
       const locationStr = city ? city + ", " + (prov || state || "") : (prov ? CA_PROPERTY_TAXES[prov]?.label || prov : state || "Canada & US");
-      document.title = `Mortgage Calculator — ${locationStr} | MortgageHive`;
+      document.title = `Mortgage Calculator — ${locationStr} | CalculateMortgageLoan.com`;
       const metaDesc = document.querySelector("meta[name=description]");
       if (metaDesc) metaDesc.setAttribute("content",
         `Free mortgage calculator for ${locationStr}. Includes CMHC insurance, land transfer tax, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker. No signup required.`
@@ -818,7 +818,7 @@ ${hoa > 0 ? `  HOA: ${fmtC(hoa)}\n` : ""}
 Total Interest: ${fmtC(totalInterest)}
 ${country === "CA" ? `Land Transfer Tax: ${fmtC(ltt.total)}` : `Estimated Closing Costs: ${fmtC(usCosts?.total || 0)}`}
 
-Calculated at MortgageHive.app`;
+Calculated at CalculateMortgageLoan.com`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -835,7 +835,7 @@ Calculated at MortgageHive.app`;
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "MortgageHive — Canada & US Mortgage Calculator",
-        "url": "https://mortgagehive.vercel.app",
+        "url": "https://calculatemortgageloan.com",
         "description": "Free mortgage calculator for Canada and the US. Includes CMHC insurance, land transfer tax by province, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker.",
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
@@ -2388,11 +2388,11 @@ Calculated at MortgageHive.app`;
             Realtors, mortgage brokers, and finance blogs — add the most complete mortgage calculator to your site. Free embed with MortgageHive branding, or contact us for white-label licensing with your own branding.
           </p>
           <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", fontFamily: "'DM Mono',monospace", fontSize: 11, color: "var(--green)", wordBreak: "break-all", marginBottom: 10 }}>
-            {`<iframe src="https://mortgagehive.vercel.app${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`}
+            {`<iframe src="https://calculatemortgageloan.com${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <button onClick={() => {
-              const code = `<iframe src="https://mortgagehive.vercel.app${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`;
+              const code = `<iframe src="https://calculatemortgageloan.com${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`;
               navigator.clipboard.writeText(code);
               setCopied("embed");
               setTimeout(() => setCopied(false), 2000);
