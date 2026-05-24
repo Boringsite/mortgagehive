@@ -1590,6 +1590,7 @@ Calculated at MortgageHive.app`;
                 ))}
               </div>
             </div>
+            )}
           </div>
         )}
 
