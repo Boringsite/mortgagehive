@@ -165,6 +165,46 @@ function getPropertyTaxFromLocation(country, province, usState, cityName) {
   }
 }
 
+// ── Extra Payment Savings ────────────────────────────────────────────────────
+function calcWithExtraPayment(principal, annualRate, years, extraMonthly) {
+  if (annualRate === 0) return { months: years * 12, interest: 0 };
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  const basePayment = (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  const totalPayment = basePayment + extraMonthly;
+  let balance = principal;
+  let months = 0;
+  let totalInterest = 0;
+  while (balance > 0 && months < n * 2) {
+    const interest = balance * r;
+    totalInterest += interest;
+    const princ = Math.min(totalPayment - interest, balance);
+    balance -= princ;
+    months++;
+    if (balance <= 0) break;
+  }
+  return { months, interest: totalInterest, basePayment, totalPayment };
+}
+
+// ── Points Buydown ────────────────────────────────────────────────────────────
+function calcPointsBuydown(loanAmt, rate, years, numPoints, rateDropPerPoint) {
+  const pointCost = loanAmt * (numPoints / 100);
+  const newRate = Math.max(0.1, rate - numPoints * rateDropPerPoint);
+  const oldPayment = calcMonthly2(loanAmt, rate, years);
+  const newPayment = calcMonthly2(loanAmt, newRate, years);
+  const monthlySavings = oldPayment - newPayment;
+  const breakEvenMonths = monthlySavings > 0 ? Math.ceil(pointCost / monthlySavings) : null;
+  const lifetimeSavings = monthlySavings > 0 ? monthlySavings * years * 12 - pointCost : -pointCost;
+  return { pointCost, newRate, newPayment, oldPayment, monthlySavings, breakEvenMonths, lifetimeSavings };
+}
+
+function calcMonthly2(principal, annualRate, years) {
+  if (annualRate === 0) return principal / (years * 12);
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  return (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+}
+
 // ── Mortgage Math ─────────────────────────────────────────────────────────────
 function calcMonthly(principal, annualRate, years) {
   if (annualRate === 0) return principal / (years * 12);
@@ -538,6 +578,10 @@ export default function MortgageCalculator() {
   const [vacancyRate, setVacancyRate] = useState(5);
   const [rentalExpenses, setRentalExpenses] = useState(300);
   const [compareMode, setCompareMode] = useState("scenarios");
+  const [extraPayment, setExtraPayment] = useState(0);
+  const [extraPayFreq, setExtraPayFreq] = useState("monthly");
+  const [points, setPoints] = useState(0);
+  const [pointsRateReduction, setPointsRateReduction] = useState(0.25);
 
   useEffect(() => { localStorage.setItem("mh_theme", lightMode ? "light" : "dark"); }, [lightMode]);
 
@@ -693,6 +737,11 @@ Calculated at MortgageHive.app`;
         .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
         .mono{font-family:'DM Mono',monospace}
         .chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid}
+      @media print{
+        header,.tab-btn,.range,.num-input,.select{display:none!important}
+        body{background:white!important;color:black!important}
+        .card{border:1px solid #ddd!important;break-inside:avoid}
+      }
       `}</style>
 
       {/* Header */}
@@ -1041,6 +1090,44 @@ Calculated at MortgageHive.app`;
                   </div>
                 </div>
 
+                {/* True Cost of Ownership */}
+                <div className="card" style={{ border: "1px solid rgba(245,158,11,0.25)", background: lm ? "rgba(245,158,11,0.03)" : "rgba(245,158,11,0.05)" }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "var(--amber)", marginBottom: 10 }}>🏡 True Cost of Ownership (10 years)</div>
+                  {(() => {
+                    const maintenance = homePrice * 0.01; // 1% annually
+                    const utilityExtra = 2400; // extra utilities vs renting
+                    const propertyTaxAnnual = taxes * 12;
+                    const insuranceAnnual = insurance * 12;
+                    const mortgagePayments = pi * 12;
+                    const interestFirstYear = amortRows.slice(0, 12).reduce((s, r) => s + r.interest, 0);
+                    const interestTenYear = amortRows.slice(0, 120).reduce((s, r) => s + r.interest, 0);
+                    const equityTenYear = homePrice * (Math.pow(1 + 3 / 100, 10) - 1) + amortRows.slice(0, 120).reduce((s, r) => s + r.principal, 0);
+                    const totalCostTenYear = (totalMonthly * 120) + (maintenance * 10) + (utilityExtra * 10);
+                    return (
+                      <div>
+                        {[
+                          { label: "Mortgage payments (10yr)", val: fmtC(totalMonthly * 120) },
+                          { label: "Est. maintenance (1%/yr)", val: fmtC(maintenance * 10), note: "Repairs, upkeep, appliances" },
+                          { label: "Extra utilities vs renting", val: fmtC(utilityExtra * 10), note: "Estimate" },
+                          { label: "Total 10-year outlay", val: fmtC(totalCostTenYear), bold: true },
+                          { label: "Est. equity gained (10yr)", val: fmtC(equityTenYear), color: "var(--green)", bold: true, note: "3% appreciation + principal paid" },
+                        ].map(r => (
+                          <div key={r.label} className="br-row">
+                            <div>
+                              <div style={{ color: "var(--text2)", fontSize: 12 }}>{r.label}</div>
+                              {r.note && <div style={{ color: "var(--text3)", fontSize: 10 }}>{r.note}</div>}
+                            </div>
+                            <span style={{ color: r.color || (r.bold ? "var(--text)" : "var(--text2)"), fontWeight: r.bold ? 800 : 600, fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{r.val}</span>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 8, fontSize: 11, color: "var(--text3)" }}>
+                          💡 Budget 1-3% of home value per year for maintenance — most first-time buyers underestimate this significantly.
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {/* Canada stress test */}
                 {country === "CA" && (
                   <div className="card" style={{ border: "1px solid rgba(59,130,246,0.3)", background: lm ? "rgba(59,130,246,0.04)" : "rgba(59,130,246,0.06)" }}>
@@ -1376,7 +1463,7 @@ Calculated at MortgageHive.app`;
             <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 14 }}>Compare scenarios or calculate your mortgage renewal impact.</p>
             {/* Mode toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 20, background: "var(--bg3)", borderRadius: 10, padding: 4, width: "fit-content" }}>
-              {[["scenarios","⚖️ Scenario Compare"],["renewal","🔄 Renewal Calculator"],["refi","💳 Refinance Calculator"]].map(([key, label]) => (
+              {[["scenarios","⚖️ Scenario Compare"],["renewal","🔄 Renewal Calculator"],["refi","💳 Refinance Calculator"],["points","🎯 Points Buydown"]].map(([key, label]) => (
                 <button key={key} onClick={() => setCompareMode(key)} style={{ padding: "8px 16px", borderRadius: 8, background: compareMode === key ? "var(--bg2)" : "transparent", border: compareMode === key ? "1px solid var(--border)" : "1px solid transparent", color: compareMode === key ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700, transition: "all 0.2s" }}>
                   {label}
                 </button>
@@ -1533,6 +1620,70 @@ Calculated at MortgageHive.app`;
               );
             })()}
 
+            {/* Points Buydown Calculator */}
+            {compareMode === "points" && (() => {
+              const bd = calcPointsBuydown(loanAmt, rate, years, points, pointsRateReduction);
+              return (
+                <div>
+                  <div className="grid2" style={{ marginBottom: 14 }}>
+                    <div className="card">
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginBottom: 12 }}>Mortgage Points (Rate Buydown)</div>
+                      <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 14, lineHeight: 1.65 }}>
+                        Paying points upfront lowers your interest rate. One point = 1% of loan amount. Each point typically reduces your rate by 0.25%. Worth it if you stay long enough to break even.
+                      </p>
+                      <div style={{ marginBottom: 14 }}>
+                        <div className="label"><span>Points to buy</span><span className="val">{points} {points === 1 ? "point" : "points"} · {fmtC(bd.pointCost)}</span></div>
+                        <input type="range" className="range" min={0} max={4} step={0.25} value={points} onChange={e => setPoints(+e.target.value)} />
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <div className="label"><span>Rate reduction per point</span><span className="val">{pointsRateReduction}%</span></div>
+                        <input type="range" className="range" min={0.1} max={0.5} step={0.05} value={pointsRateReduction} onChange={e => setPointsRateReduction(+e.target.value)} />
+                        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>Standard is 0.25% per point — ask your lender for their exact rate</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="card" style={{ marginBottom: 12, background: lm ? "linear-gradient(135deg,#f0fdf4,#fff)" : "linear-gradient(135deg,#111f12,#0a160b)", border: "1px solid var(--border)" }}>
+                        <div style={{ fontSize: 12, color: "var(--text2)", fontWeight: 700, marginBottom: 6 }}>
+                          {bd.monthlySavings > 0 ? "Monthly savings from buying points" : "No savings"}
+                        </div>
+                        <div style={{ fontSize: 40, fontWeight: 900, color: "var(--green)", fontFamily: "'DM Mono',monospace", lineHeight: 1 }}>
+                          {fmtC(bd.monthlySavings)}<span style={{ fontSize: 14 }}>/mo</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 6 }}>
+                          New rate: <strong style={{ color: "var(--green)", fontFamily: "'DM Mono',monospace" }}>{bd.newRate.toFixed(2)}%</strong> (down from {rate}%)
+                        </div>
+                      </div>
+                      <div className="card">
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>Points analysis</div>
+                        {[
+                          { label: "Points cost upfront", val: fmtC(bd.pointCost), color: "var(--red)" },
+                          { label: "Original rate", val: rate + "%", color: "var(--text)" },
+                          { label: "New rate", val: bd.newRate.toFixed(2) + "%", color: "var(--green)" },
+                          { label: "Monthly savings", val: fmtC(bd.monthlySavings), color: "var(--green)" },
+                          { label: "Break-even", val: bd.breakEvenMonths ? `${bd.breakEvenMonths} months (${(bd.breakEvenMonths/12).toFixed(1)} yrs)` : "Never", color: bd.breakEvenMonths && bd.breakEvenMonths < years * 12 ? "var(--green)" : "var(--red)" },
+                          { label: "Lifetime savings (after cost)", val: fmtC(bd.lifetimeSavings), color: bd.lifetimeSavings > 0 ? "var(--green)" : "var(--red)" },
+                        ].map(r => (
+                          <div key={r.label} className="br-row">
+                            <span style={{ color: "var(--text2)", fontSize: 12 }}>{r.label}</span>
+                            <span style={{ color: r.color, fontWeight: 700, fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{r.val}</span>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 10, padding: "8px 10px", borderRadius: 8, fontSize: 12, lineHeight: 1.6,
+                          background: bd.breakEvenMonths && bd.breakEvenMonths < years * 6 ? "var(--green-dim)" : "rgba(245,158,11,0.08)",
+                          color: bd.breakEvenMonths && bd.breakEvenMonths < years * 6 ? "var(--green)" : "var(--amber)" }}>
+                          {points === 0 ? "Add points above to see the analysis." :
+                            !bd.breakEvenMonths ? "⚠️ No savings from buying points at these settings." :
+                            bd.breakEvenMonths < 36 ? `✅ Strong buy — you break even in under 3 years and save ${fmtC(bd.lifetimeSavings)} over the loan.` :
+                            bd.breakEvenMonths < 60 ? `✅ Good buy — break even in ${(bd.breakEvenMonths/12).toFixed(1)} years. Worth it if you plan to stay.` :
+                            `⚠️ Break-even takes ${(bd.breakEvenMonths/12).toFixed(1)} years. Only worth it if you stay long-term.`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Original scenario comparison — shown when compareMode === "scenarios" */}
             {compareMode === "scenarios" && (
             <>
@@ -1669,8 +1820,59 @@ Calculated at MortgageHive.app`;
         {/* ── AMORTIZATION TAB ── */}
         {tab === "amortization" && (
           <div className="fade-in">
-            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Amortization Schedule</div>
-            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 16 }}>See how your loan is paid off over time and how much goes to interest vs principal each year.</p>
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Amortization Schedule & Extra Payments</div>
+            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 16 }}>See how your loan is paid off over time — and how extra payments could save you years and thousands of dollars.</p>
+
+            {/* Extra payment calculator */}
+            <div className="card" style={{ marginBottom: 14, border: "1px solid rgba(74,222,128,0.25)" }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--green)", marginBottom: 12 }}>💰 Extra Payment Calculator</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                <div>
+                  <div className="label"><span>Extra payment amount</span><span className="val">{fmtC(extraPayment)}</span></div>
+                  <input type="range" className="range" min={0} max={5000} step={50} value={extraPayment} onChange={e => setExtraPayment(+e.target.value)} />
+                </div>
+                <div>
+                  <div className="label"><span>Frequency</span></div>
+                  <div style={{ display: "flex", gap: 5 }}>
+                    {[["monthly","Monthly"],["annually","Annually"]].map(([key, label]) => (
+                      <button key={key} onClick={() => setExtraPayFreq(key)} style={{ flex: 1, padding: "7px", borderRadius: 8, border: `1px solid ${extraPayFreq === key ? "var(--green)" : "var(--border2)"}`, background: extraPayFreq === key ? "var(--green-dim)" : "transparent", color: extraPayFreq === key ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700 }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {extraPayment > 0 && (() => {
+                const monthlyExtra = extraPayFreq === "monthly" ? extraPayment : extraPayment / 12;
+                const withExtra = calcWithExtraPayment(loanAmt, rate, years, monthlyExtra);
+                const without = calcWithExtraPayment(loanAmt, rate, years, 0);
+                const monthsSaved = without.months - withExtra.months;
+                const yearsSaved = Math.floor(monthsSaved / 12);
+                const moSaved = monthsSaved % 12;
+                const interestSaved = without.interest - withExtra.interest;
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10 }}>
+                    {[
+                      { label: "Time saved", val: `${yearsSaved}yr ${moSaved}mo`, color: "var(--green)", big: true },
+                      { label: "Interest saved", val: fmtC(interestSaved), color: "var(--green)", big: true },
+                      { label: "Paid off", val: `${new Date().getFullYear() + Math.floor(withExtra.months / 12)}`, color: "var(--text)" },
+                      { label: "Extra cost/yr", val: fmtC(monthlyExtra * 12), color: "var(--text)" },
+                    ].map(s => (
+                      <div key={s.label} style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px" }}>
+                        <div style={{ fontSize: 11, color: "var(--text2)", marginBottom: 3 }}>{s.label}</div>
+                        <div style={{ fontSize: s.big ? 20 : 16, fontWeight: 900, color: s.color, fontFamily: "'DM Mono',monospace" }}>{s.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              {extraPayment === 0 && (
+                <div style={{ fontSize: 12, color: "var(--text3)", textAlign: "center", padding: "8px 0" }}>
+                  Move the slider above to see how extra payments dramatically reduce your mortgage
+                </div>
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
               {[["annual","Annual"],["monthly","Monthly (first 60 months)"]].map(([id, label]) => (
                 <button key={id} className={`tab-btn ${amortView === id ? "active" : ""}`} onClick={() => setAmortView(id)}>{label}</button>
@@ -1755,6 +1957,139 @@ Calculated at MortgageHive.app`;
             </div>
           </div>
         )}
+
+        {/* ── QUALIFICATION REPORT ── */}
+        {(() => {
+          const creditOk = true; // User doesn't enter credit score — assume they know
+          const frontDTIOk = frontDTI <= (country === "CA" ? 32 : 28);
+          const backDTIOk = backDTI <= 44;
+          const stressOk = country !== "CA" || stressTestDTI <= 44;
+          const downOk = downPct >= minDown;
+          const overallOk = backDTIOk && stressOk && downOk;
+
+          const issues = [];
+          if (!frontDTIOk) issues.push({ type: "warn", icon: "⚠️", title: "Front-end DTI is high", detail: `Your housing costs are ${frontDTI.toFixed(1)}% of gross income. Lenders prefer below ${country === "CA" ? 32 : 28}%. Fix: increase income, reduce loan amount, or increase down payment.`, impact: "Medium" });
+          if (!backDTIOk) issues.push({ type: "fail", icon: "❌", title: "Total DTI exceeds lender limit", detail: `Your total debt ratio is ${backDTI.toFixed(1)}%. Most lenders cap at 44%. Fix: pay down ${fmtC(Math.max(0, (otherDebts - (monthlyIncome * 0.44 - totalMonthly))))} in monthly debt obligations, or choose a lower-priced home.`, impact: "High" });
+          if (!stressOk && country === "CA") issues.push({ type: "fail", icon: "❌", title: "Fails Canadian stress test", detail: `At the stress test rate of ${Math.max(rate + 2, 5.25).toFixed(2)}%, your DTI is ${stressTestDTI.toFixed(1)}%. Fix: reduce loan amount, increase down payment, or pay down other debts.`, impact: "High" });
+          if (!downOk) issues.push({ type: "fail", icon: "❌", title: "Down payment below minimum", detail: `Minimum required is ${minDown.toFixed(1)}% (${fmtC(homePrice * minDown / 100)}). You have ${downPct}%. Fix: save an additional ${fmtC(homePrice * minDown / 100 - downAmt)}.`, impact: "Critical" });
+          if (downPct < 20 && country === "US") issues.push({ type: "warn", icon: "⚠️", title: "PMI required", detail: `With ${downPct}% down you pay ${fmtC(usPmi)}/mo in PMI until you reach 20% equity. Fix: put 20%+ down to eliminate PMI entirely.`, impact: "Low" });
+          if (downPct < 20 && country === "CA") issues.push({ type: "warn", icon: "⚠️", title: "CMHC insurance required", detail: `CMHC adds ${fmtC(cmhc.premium)} to your mortgage. ${cmhc.tax > 0 ? `Plus ${fmtC(cmhc.tax)} PST due in cash at closing in ${province}.` : ""}`, impact: "Low" });
+
+          const strengths = [];
+          if (frontDTIOk) strengths.push({ icon: "✅", text: `Front-end DTI ${frontDTI.toFixed(1)}% — within lender guidelines` });
+          if (backDTIOk) strengths.push({ icon: "✅", text: `Total DTI ${backDTI.toFixed(1)}% — lenders will likely approve` });
+          if (stressOk && country === "CA") strengths.push({ icon: "✅", text: `Passes Canadian stress test at ${Math.max(rate + 2, 5.25).toFixed(2)}%` });
+          if (downPct >= 20) strengths.push({ icon: "✅", text: `20%+ down payment — no CMHC or PMI required` });
+          if (isFirstTime) strengths.push({ icon: "✅", text: `First-time buyer — eligible for all government programs` });
+
+          return (
+            <div style={{ marginTop: 32, marginBottom: 32, border: `2px solid ${overallOk ? "var(--green)" : "var(--red)"}`, borderRadius: 16, overflow: "hidden" }}>
+              {/* Report header */}
+              <div style={{ background: overallOk ? "linear-gradient(135deg,#15803d,#166534)" : "linear-gradient(135deg,#991b1b,#7f1d1d)", padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 3 }}>
+                    {overallOk ? "✅ Likely to Qualify" : "❌ May Not Qualify"} — Lender Assessment
+                  </div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
+                    Based on your numbers · Not a guarantee · Get pre-approved for a firm answer
+                  </div>
+                </div>
+                <button onClick={() => window.print()} style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  🖨️ Print Report
+                </button>
+              </div>
+
+              <div style={{ padding: "20px 22px", background: "var(--bg2)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 14, marginBottom: 20 }}>
+
+                  {/* Key metrics */}
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Key Metrics</div>
+                    {[
+                      { label: "Home price", val: fmtC(homePrice), ok: true },
+                      { label: "Loan amount", val: fmtC(loanAmt), ok: true },
+                      { label: "Down payment", val: `${downPct}% (${fmtC(downAmt)})`, ok: downOk },
+                      { label: "Monthly payment", val: fmtC(totalMonthly), ok: totalMonthly < monthlyIncome * (country === "CA" ? 0.32 : 0.28) },
+                      { label: "Front-end DTI", val: `${frontDTI.toFixed(1)}%`, ok: frontDTIOk },
+                      { label: "Back-end DTI", val: `${backDTI.toFixed(1)}%`, ok: backDTIOk },
+                      ...(country === "CA" ? [{ label: "Stress test DTI", val: `${stressTestDTI.toFixed(1)}%`, ok: stressOk }] : []),
+                      { label: "Total interest cost", val: fmtC(totalInterest), ok: null },
+                    ].map(r => (
+                      <div key={r.label} className="br-row">
+                        <span style={{ color: "var(--text2)", fontSize: 13 }}>{r.label}</span>
+                        <span style={{ fontWeight: 700, fontFamily: "'DM Mono',monospace", color: r.ok === null ? "var(--text)" : r.ok ? "var(--green)" : "var(--red)" }}>{r.val}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Strengths + Issues */}
+                  <div>
+                    {strengths.length > 0 && (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "var(--green)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>✅ Strengths</div>
+                        {strengths.map((s, i) => (
+                          <div key={i} style={{ fontSize: 13, color: "var(--text2)", padding: "5px 0", borderBottom: "1px solid var(--border2)", lineHeight: 1.5 }}>
+                            {s.icon} {s.text}
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    {issues.length > 0 && (
+                      <div style={{ marginTop: strengths.length > 0 ? 14 : 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "var(--red)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Issues to Address</div>
+                        {issues.map((issue, i) => (
+                          <div key={i} style={{ padding: "10px 12px", background: issue.type === "fail" ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${issue.type === "fail" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`, borderRadius: 8, marginBottom: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                              <span style={{ fontSize: 14 }}>{issue.icon}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: issue.type === "fail" ? "var(--red)" : "var(--amber)" }}>{issue.title}</span>
+                              <span style={{ marginLeft: "auto", fontSize: 10, padding: "1px 6px", borderRadius: 20, background: issue.impact === "Critical" ? "rgba(239,68,68,0.15)" : issue.impact === "High" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)", color: issue.impact === "Critical" || issue.impact === "High" ? "var(--red)" : "var(--amber)", fontWeight: 700 }}>{issue.impact}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.6 }}>{issue.detail}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action plan */}
+                <div style={{ padding: "14px 16px", background: "var(--bg3)", borderRadius: 10, borderLeft: `3px solid ${overallOk ? "var(--green)" : "var(--amber)"}` }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>
+                    {overallOk ? "🎯 You look good — here's what to do next:" : "📋 Recommended action plan:"}
+                  </div>
+                  {overallOk ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }}>
+                      {[
+                        { step: "1", text: "Get pre-approved with 2-3 lenders and compare rates" },
+                        { step: "2", text: "Gather documents: 2 yrs tax returns, pay stubs, bank statements" },
+                        { step: "3", text: country === "CA" ? "Open FHSA if first-time buyer — contribute up to $8,000" : "Explore DPA programs in your state" },
+                        { step: "4", text: "Lock your rate once pre-approved in a rising rate environment" },
+                      ].map(a => (
+                        <div key={a.step} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--green)", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{a.step}</div>
+                          <span style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.55 }}>{a.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }}>
+                      {issues.filter(i => i.type === "fail").concat(issues.filter(i => i.type === "warn")).slice(0, 4).map((issue, i) => (
+                        <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: issue.type === "fail" ? "var(--red)" : "var(--amber)", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
+                          <span style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.55 }}>{issue.title} — {issue.detail.split(".")[0]}.</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ marginTop: 10, fontSize: 11, color: "var(--text3)", textAlign: "center" }}>
+                  This assessment is based on standard lender guidelines. Actual approval depends on your credit score, employment history, and individual lender criteria. Always get pre-approved for a firm answer.
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── FAQ ── */}
         <div style={{ marginTop: 48 }}>
