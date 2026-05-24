@@ -1535,6 +1535,7 @@ Calculated at MortgageHive.app`;
 
             {/* Original scenario comparison — shown when compareMode === "scenarios" */}
             {compareMode === "scenarios" && (
+            <>
             <div className="grid2">
               <div className="card" style={{ border: "2px solid var(--green)" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: "var(--green)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario A — Current</div>
@@ -1590,6 +1591,7 @@ Calculated at MortgageHive.app`;
                 ))}
               </div>
             </div>
+            </>
             )}
           </div>
         )}
