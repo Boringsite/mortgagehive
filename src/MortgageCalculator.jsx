@@ -336,6 +336,22 @@ export default function MortgageCalculator() {
   const [payFreq, setPayFreq] = useState("monthly");
   const [expandedStep, setExpandedStep] = useState(null);
   const [amortView, setAmortView] = useState("annual");
+  const [renewalBalance, setRenewalBalance] = useState(400000);
+  const [renewalOldRate, setRenewalOldRate] = useState(3.5);
+  const [renewalNewRate, setRenewalNewRate] = useState(5.5);
+  const [renewalYearsLeft, setRenewalYearsLeft] = useState(20);
+  const [renewalPenalty, setRenewalPenalty] = useState(3000);
+  const [refiBalance, setRefiBalance] = useState(400000);
+  const [refiOldRate, setRefiOldRate] = useState(6.5);
+  const [refiNewRate, setRefiNewRate] = useState(5.0);
+  const [refiYearsLeft, setRefiYearsLeft] = useState(20);
+  const [refiPenalty, setRefiPenalty] = useState(4000);
+  const [refiCashOut, setRefiCashOut] = useState(0);
+  const [propertyMode, setPropertyMode] = useState("owner");
+  const [rentalIncome, setRentalIncome] = useState(2800);
+  const [vacancyRate, setVacancyRate] = useState(5);
+  const [rentalExpenses, setRentalExpenses] = useState(300);
+  const [compareMode, setCompareMode] = useState("scenarios");
 
   useEffect(() => { localStorage.setItem("mh_theme", lightMode ? "light" : "dark"); }, [lightMode]);
 
@@ -631,6 +647,61 @@ Calculated at MortgageHive.app`;
                     )}
                   </div>
 
+                  {/* Property mode */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="label"><span>Property type</span></div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {[["owner","🏠 Owner-occupied"],["rental","🏢 Rental / Investment"]].map(([key, label]) => (
+                        <button key={key} onClick={() => setPropertyMode(key)} style={{ flex: 1, padding: "7px", borderRadius: 8, border: `1px solid ${propertyMode === key ? "var(--green)" : "var(--border2)"}`, background: propertyMode === key ? "var(--green-dim)" : "transparent", color: propertyMode === key ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700 }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Rental inputs — only shown in rental mode */}
+                  {propertyMode === "rental" && (
+                    <div style={{ padding: "12px 14px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 10, marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: "#3b82f6", marginBottom: 10 }}>🏢 Rental Analysis</div>
+                      {[
+                        { label: "Monthly rental income", val: rentalIncome, set: setRentalIncome },
+                        { label: "Monthly expenses (maintenance, mgmt)", val: rentalExpenses, set: setRentalExpenses },
+                      ].map(f => (
+                        <div key={f.label} style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 11, color: "var(--text2)", fontWeight: 600, marginBottom: 4 }}>{f.label}</div>
+                          <input type="number" className="num-input" value={f.val} onChange={e => f.set(+e.target.value)} />
+                        </div>
+                      ))}
+                      <div style={{ marginBottom: 8 }}>
+                        <div className="label"><span>Vacancy rate</span><span className="val">{vacancyRate}%</span></div>
+                        <input type="range" className="range" min={0} max={20} step={1} value={vacancyRate} onChange={e => setVacancyRate(+e.target.value)} />
+                      </div>
+                      {(() => {
+                        const effectiveRent = rentalIncome * (1 - vacancyRate / 100);
+                        const cashFlow = effectiveRent - totalMonthly - rentalExpenses;
+                        const capRate = ((effectiveRent - rentalExpenses) * 12 / homePrice * 100);
+                        const cashOnCash = (cashFlow * 12 / downAmt * 100);
+                        return (
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(59,130,246,0.15)" }}>
+                            {[
+                              { label: "Effective monthly rent", val: fmtC(effectiveRent), color: "var(--green)" },
+                              { label: "Monthly cash flow", val: fmtC(cashFlow), color: cashFlow >= 0 ? "var(--green)" : "var(--red)" },
+                              { label: "Annual cash flow", val: fmtC(cashFlow * 12), color: cashFlow >= 0 ? "var(--green)" : "var(--red)" },
+                              { label: "Cap rate", val: capRate.toFixed(2) + "%", color: capRate >= 5 ? "var(--green)" : "var(--amber)" },
+                              { label: "Cash-on-cash return", val: cashOnCash.toFixed(2) + "%", color: cashOnCash >= 8 ? "var(--green)" : "var(--amber)" },
+                            ].map(r => (
+                              <div key={r.label} className="br-row">
+                                <span style={{ color: "var(--text2)", fontSize: 12 }}>{r.label}</span>
+                                <span style={{ color: r.color, fontWeight: 800, fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{r.val}</span>
+                              </div>
+                            ))}
+                            <div style={{ marginTop: 8, fontSize: 11, color: "#3b82f6", lineHeight: 1.6 }}>
+                              {cashFlow >= 0 ? "✅ Positive cash flow — this property generates income above costs." : `⚠️ Negative cash flow of ${fmtC(Math.abs(cashFlow))}/mo — you'll need to supplement from other income.`}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                   {/* Payment frequency */}
                   <div style={{ marginBottom: 0 }}>
                     <div className="label"><span>Payment frequency</span></div>
@@ -872,6 +943,27 @@ Calculated at MortgageHive.app`;
                   </div>
                 </div>
 
+                {/* Newcomer to Canada section */}
+                <div className="card" style={{ gridColumn: "1 / -1", border: "1px solid rgba(59,130,246,0.25)", background: lm ? "rgba(59,130,246,0.03)" : "rgba(59,130,246,0.05)" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "#3b82f6" }}>🌍 New to Canada? Here's what you need to know</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 10 }}>
+                    {[
+                      { title: "Who can buy?", icon: "🏠", detail: "Permanent Residents (PR) and Canadian citizens can buy without restrictions. Temporary residents (work/study permits) can buy but foreign buyer rules may apply depending on province. The federal foreign buyer ban (2023-2025) has ended as of January 1, 2025.", color: "#3b82f6" },
+                      { title: "Down payment rules for newcomers", icon: "💰", detail: "If you have less than 2 years of Canadian credit history, lenders may require a larger down payment (typically 20-35%). Using international credit history from the US, UK, or Australia is sometimes accepted by major banks.", color: "#16a34a" },
+                      { title: "Building credit in Canada", icon: "📈", detail: "Get a secured credit card immediately upon arrival. Pay all bills on time. Apply for a credit card with your bank. It takes 6-12 months to build enough Canadian credit history for mortgage approval.", color: "#f59e0b" },
+                      { title: "CMHC for newcomers", icon: "🛡️", detail: "CMHC insured mortgages are available to newcomers with valid work or study permits. You must occupy the property as your principal residence. Non-permanent residents pay the same CMHC premiums as citizens.", color: "#7c3aed" },
+                      { title: "Non-Resident Speculation Tax", icon: "⚠️", detail: "Ontario charges a 25% Non-Resident Speculation Tax (NRST) on homes bought by foreign nationals. BC charges a 20% Foreign Buyer Tax. Exemptions exist for permanent residents and those with work permits in certain regions.", color: "#ef4444" },
+                      { title: "Documents lenders need", icon: "📋", detail: "Work/study permit, passport, 3-6 months Canadian bank statements, proof of Canadian income (pay stubs, letter of employment), 2 years international income history, credit report (Canadian + international if available).", color: "#059669" },
+                    ].map(item => (
+                      <div key={item.title} style={{ background: "var(--bg3)", borderRadius: 10, padding: "14px", borderLeft: `3px solid ${item.color}` }}>
+                        <div style={{ fontSize: 18, marginBottom: 5 }}>{item.icon}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{item.title}</div>
+                        <div style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.65 }}>{item.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* First-time buyer programs */}
                 <div className="card" style={{ gridColumn: "1 / -1" }}>
                   <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "var(--text)" }}>🇨🇦 First-Time Buyer Programs (Canada)</div>
@@ -1048,8 +1140,169 @@ Calculated at MortgageHive.app`;
         {/* ── COMPARE TAB ── */}
         {tab === "compare" && (
           <div className="fade-in">
-            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Compare Scenarios</div>
-            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>See exactly how rate and term changes affect your total cost over the life of the loan.</p>
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Compare & Renew</div>
+            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 14 }}>Compare scenarios or calculate your mortgage renewal impact.</p>
+            {/* Mode toggle */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 20, background: "var(--bg3)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+              {[["scenarios","⚖️ Scenario Compare"],["renewal","🔄 Renewal Calculator"],["refi","💳 Refinance Calculator"]].map(([key, label]) => (
+                <button key={key} onClick={() => setCompareMode(key)} style={{ padding: "8px 16px", borderRadius: 8, background: compareMode === key ? "var(--bg2)" : "transparent", border: compareMode === key ? "1px solid var(--border)" : "1px solid transparent", color: compareMode === key ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700, transition: "all 0.2s" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Renewal Calculator */}
+            {compareMode === "renewal" && (() => {
+              const oldPayment = calcMonthly(renewalBalance, renewalOldRate, renewalYearsLeft);
+              const newPayment = calcMonthly(renewalBalance, renewalNewRate, renewalYearsLeft);
+              const diff = newPayment - oldPayment;
+              const oldTotal = oldPayment * renewalYearsLeft * 12;
+              const newTotal = newPayment * renewalYearsLeft * 12;
+              const totalInterestOld = oldTotal - renewalBalance;
+              const totalInterestNew = newTotal - renewalBalance;
+              return (
+                <div>
+                  <div className="grid2" style={{ marginBottom: 14 }}>
+                    <div className="card">
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginBottom: 12 }}>Your renewal details</div>
+                      {[
+                        { label: "Remaining mortgage balance", val: renewalBalance, set: setRenewalBalance, min: 10000, max: 2000000, step: 5000 },
+                        { label: "Current rate (%)", val: renewalOldRate, set: setRenewalOldRate, min: 0.5, max: 12, step: 0.05 },
+                        { label: "New offered rate (%)", val: renewalNewRate, set: setRenewalNewRate, min: 0.5, max: 12, step: 0.05 },
+                        { label: "Years remaining", val: renewalYearsLeft, set: setRenewalYearsLeft, min: 1, max: 25, step: 1 },
+                        { label: "Prepayment penalty (if breaking early)", val: renewalPenalty, set: setRenewalPenalty, min: 0, max: 30000, step: 100 },
+                      ].map(f => (
+                        <div key={f.label} style={{ marginBottom: 10 }}>
+                          <div className="label"><span style={{ fontSize: 11 }}>{f.label}</span><span className="val">{f.label.includes("%") ? f.val + "%" : f.label.includes("Years") ? f.val + " yrs" : fmtC(f.val)}</span></div>
+                          <input type="range" className="range" min={f.min} max={f.max} step={f.step} value={f.val} onChange={e => f.set(+e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="card" style={{ marginBottom: 12, background: lm ? "linear-gradient(135deg,#f0fdf4,#fff)" : "linear-gradient(135deg,#111f12,#0a160b)", border: "1px solid var(--border)" }}>
+                        <div style={{ fontSize: 12, color: "var(--text2)", fontWeight: 700, marginBottom: 6 }}>Payment change at renewal</div>
+                        <div style={{ fontSize: 40, fontWeight: 900, color: diff > 0 ? "var(--red)" : "var(--green)", fontFamily: "'DM Mono',monospace", lineHeight: 1 }}>
+                          {diff > 0 ? "+" : ""}{fmtC(diff)}<span style={{ fontSize: 14 }}>/mo</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 4 }}>
+                          {diff > 0 ? "Your payment will increase at renewal" : diff < 0 ? "Your payment will decrease at renewal" : "No change to your payment"}
+                        </div>
+                      </div>
+                      <div className="card">
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>Full comparison</div>
+                        {[
+                          { label: "Current payment", val: fmtC(oldPayment) },
+                          { label: "New payment at " + renewalNewRate + "%", val: fmtC(newPayment), color: diff > 0 ? "var(--red)" : "var(--green)" },
+                          { label: "Monthly difference", val: (diff > 0 ? "+" : "") + fmtC(diff), color: diff > 0 ? "var(--red)" : "var(--green)" },
+                          { label: "Annual difference", val: (diff > 0 ? "+" : "") + fmtC(diff * 12), color: diff > 0 ? "var(--red)" : "var(--green)" },
+                          { label: "Total interest at old rate", val: fmtC(totalInterestOld) },
+                          { label: "Total interest at new rate", val: fmtC(totalInterestNew), color: totalInterestNew > totalInterestOld ? "var(--red)" : "var(--green)" },
+                          { label: "Interest difference", val: fmtC(Math.abs(totalInterestNew - totalInterestOld)), color: totalInterestNew > totalInterestOld ? "var(--red)" : "var(--green)" },
+                        ].map(r => (
+                          <div key={r.label} className="br-row">
+                            <span style={{ color: "var(--text2)", fontSize: 12 }}>{r.label}</span>
+                            <span style={{ color: r.color || "var(--text)", fontWeight: 700, fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{r.val}</span>
+                          </div>
+                        ))}
+                        {renewalPenalty > 0 && (
+                          <div style={{ marginTop: 10, padding: "8px 10px", background: "rgba(245,158,11,0.08)", borderRadius: 8, fontSize: 12, color: "var(--amber)" }}>
+                            ⚠️ After prepayment penalty of {fmtC(renewalPenalty)}, you break even on refinancing in {Math.ceil(renewalPenalty / Math.abs(diff))} months.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="card" style={{ background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#3b82f6", marginBottom: 8 }}>💡 Renewal tips from mortgage professionals</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 8 }}>
+                      {[
+                        { tip: "Start shopping 4 months early", detail: "Most lenders allow early renewal 120 days before maturity with no penalty. This gives you leverage to negotiate." },
+                        { tip: "Don't just go with your current lender", detail: "Your renewal offer is usually not their best rate. Get quotes from 2-3 lenders and a mortgage broker before signing." },
+                        { tip: "Consider a shorter term if rates are high", detail: "If you believe rates will fall, a 2-3 year term lets you lock in a better rate sooner than a 5-year term." },
+                        { tip: "Negotiate prepayment privileges", detail: "Ask for 20% annual lump-sum prepayment and 20% payment increase privileges. These let you pay off faster without penalty." },
+                      ].map(t => (
+                        <div key={t.tip} style={{ padding: "10px 12px", background: "var(--bg3)", borderRadius: 8 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 3 }}>{t.tip}</div>
+                          <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.55 }}>{t.detail}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Refinance Calculator */}
+            {compareMode === "refi" && (() => {
+              const oldPayment = calcMonthly(refiBalance, refiOldRate, refiYearsLeft);
+              const newLoan = refiBalance + refiCashOut;
+              const newPayment = calcMonthly(newLoan, refiNewRate, refiYearsLeft);
+              const monthlySavings = oldPayment - newPayment;
+              const breakEvenMonths = monthlySavings > 0 ? Math.ceil(refiPenalty / monthlySavings) : null;
+              return (
+                <div>
+                  <div className="grid2" style={{ marginBottom: 14 }}>
+                    <div className="card">
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginBottom: 12 }}>Refinance details</div>
+                      {[
+                        { label: "Current mortgage balance", val: refiBalance, set: setRefiBalance, min: 10000, max: 2000000, step: 5000 },
+                        { label: "Current rate (%)", val: refiOldRate, set: setRefiOldRate, min: 0.5, max: 12, step: 0.05 },
+                        { label: "New rate (%)", val: refiNewRate, set: setRefiNewRate, min: 0.5, max: 12, step: 0.05 },
+                        { label: "Years remaining", val: refiYearsLeft, set: setRefiYearsLeft, min: 1, max: 25, step: 1 },
+                        { label: "Prepayment / break penalty", val: refiPenalty, set: setRefiPenalty, min: 0, max: 50000, step: 100 },
+                        { label: "Cash-out amount (optional)", val: refiCashOut, set: setRefiCashOut, min: 0, max: 200000, step: 1000 },
+                      ].map(f => (
+                        <div key={f.label} style={{ marginBottom: 10 }}>
+                          <div className="label"><span style={{ fontSize: 11 }}>{f.label}</span><span className="val">{f.label.includes("%") ? f.val + "%" : f.label.includes("Years") ? f.val + " yrs" : fmtC(f.val)}</span></div>
+                          <input type="range" className="range" min={f.min} max={f.max} step={f.step} value={f.val} onChange={e => f.set(+e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="card" style={{ marginBottom: 12, background: lm ? "linear-gradient(135deg,#f0fdf4,#fff)" : "linear-gradient(135deg,#111f12,#0a160b)", border: "1px solid var(--border)" }}>
+                        <div style={{ fontSize: 12, color: "var(--text2)", fontWeight: 700, marginBottom: 6 }}>
+                          {monthlySavings > 0 ? "Monthly savings" : "Monthly increase"}
+                        </div>
+                        <div style={{ fontSize: 40, fontWeight: 900, color: monthlySavings > 0 ? "var(--green)" : "var(--red)", fontFamily: "'DM Mono',monospace", lineHeight: 1 }}>
+                          {monthlySavings > 0 ? "" : "+"}{fmtC(Math.abs(monthlySavings))}<span style={{ fontSize: 14 }}>/mo</span>
+                        </div>
+                        {breakEvenMonths && monthlySavings > 0 && (
+                          <div style={{ fontSize: 12, color: "var(--text2)", marginTop: 6 }}>
+                            Break even in <strong style={{ color: "var(--green)" }}>{breakEvenMonths} months</strong> after penalty
+                          </div>
+                        )}
+                      </div>
+                      <div className="card">
+                        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>Refinance analysis</div>
+                        {[
+                          { label: "Current payment", val: fmtC(oldPayment) },
+                          { label: "New payment", val: fmtC(newPayment), color: newPayment < oldPayment ? "var(--green)" : "var(--red)" },
+                          { label: "Monthly savings", val: fmtC(monthlySavings), color: monthlySavings > 0 ? "var(--green)" : "var(--red)" },
+                          { label: "New loan amount", val: fmtC(newLoan) },
+                          { label: "Prepayment penalty", val: fmtC(refiPenalty), color: "var(--amber)" },
+                          ...(breakEvenMonths ? [{ label: "Break-even point", val: breakEvenMonths + " months", color: breakEvenMonths < 24 ? "var(--green)" : "var(--amber)" }] : []),
+                          ...(refiCashOut > 0 ? [{ label: "Cash out", val: fmtC(refiCashOut), color: "var(--blue)" }] : []),
+                        ].map(r => (
+                          <div key={r.label} className="br-row">
+                            <span style={{ color: "var(--text2)", fontSize: 12 }}>{r.label}</span>
+                            <span style={{ color: r.color || "var(--text)", fontWeight: 700, fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{r.val}</span>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: 10, padding: "8px 10px", background: monthlySavings > 0 && (breakEvenMonths || 0) < 24 ? "var(--green-dim)" : "rgba(245,158,11,0.08)", borderRadius: 8, fontSize: 12, color: monthlySavings > 0 && (breakEvenMonths || 0) < 24 ? "var(--green)" : "var(--amber)" }}>
+                          {monthlySavings <= 0 ? "⚠️ Refinancing increases your payment at this rate. Consider waiting for rates to fall further." :
+                            !breakEvenMonths ? "✅ Immediate savings with no penalty." :
+                            breakEvenMonths < 24 ? `✅ Strong candidate for refinancing — you break even in under 2 years.` :
+                            `⚠️ Break-even takes ${breakEvenMonths} months. Only worthwhile if you plan to stay long-term.`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Original scenario comparison — shown when compareMode === "scenarios" */}
+            {compareMode === "scenarios" && (
             <div className="grid2">
               <div className="card" style={{ border: "2px solid var(--green)" }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: "var(--green)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario A — Current</div>
