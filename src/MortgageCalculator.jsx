@@ -150,6 +150,21 @@ function calcUSClosingCosts(loanAmt, homePrice, state, isFirstTime) {
   };
 }
 
+// ── Auto-fill property tax from location ────────────────────────────────────
+function getPropertyTaxFromLocation(country, province, usState, cityName) {
+  if (country === "CA") {
+    const provData = CA_PROPERTY_TAXES[province];
+    if (!provData) return null;
+    const cityData = provData.cities[cityName] || provData.cities["Other " + provData.label] || null;
+    return cityData;
+  } else {
+    const stateData = US_PROPERTY_TAXES[usState];
+    if (!stateData) return null;
+    const cityData = stateData.cities[cityName] || stateData.cities["Other " + stateData.label] || null;
+    return cityData;
+  }
+}
+
 // ── Mortgage Math ─────────────────────────────────────────────────────────────
 function calcMonthly(principal, annualRate, years) {
   if (annualRate === 0) return principal / (years * 12);
@@ -200,6 +215,176 @@ const US_STATES = [
   "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
   "VA","WA","WV","WI","WY","DC",
 ];
+
+
+// ── Property Tax Database ─────────────────────────────────────────────────────
+// Canada: Annual property tax rate as % of assessed value by province/city
+const CA_PROPERTY_TAXES = {
+  ON: {
+    label: "Ontario",
+    cities: {
+      "Toronto": { rate: 0.666, avg: 5200 },
+      "Mississauga": { rate: 0.839, avg: 5800 },
+      "Brampton": { rate: 1.045, avg: 7000 },
+      "Hamilton": { rate: 1.262, avg: 7500 },
+      "London": { rate: 1.323, avg: 6800 },
+      "Ottawa": { rate: 1.123, avg: 7200 },
+      "Kingston": { rate: 1.481, avg: 7000 },
+      "Barrie": { rate: 1.316, avg: 6900 },
+      "Kitchener": { rate: 1.136, avg: 6500 },
+      "Windsor": { rate: 1.813, avg: 6200 },
+      "Owen Sound": { rate: 1.680, avg: 5800 },
+      "Sudbury": { rate: 1.546, avg: 5500 },
+      "Thunder Bay": { rate: 1.781, avg: 5200 },
+      "Other Ontario": { rate: 1.200, avg: 6000 },
+    }
+  },
+  BC: {
+    label: "British Columbia",
+    cities: {
+      "Vancouver": { rate: 0.298, avg: 3800 },
+      "Surrey": { rate: 0.369, avg: 3500 },
+      "Burnaby": { rate: 0.295, avg: 4200 },
+      "Richmond": { rate: 0.327, avg: 3900 },
+      "Kelowna": { rate: 0.526, avg: 4200 },
+      "Victoria": { rate: 0.514, avg: 4500 },
+      "Abbotsford": { rate: 0.512, avg: 4000 },
+      "Kamloops": { rate: 0.714, avg: 4100 },
+      "Prince George": { rate: 0.932, avg: 3800 },
+      "Other BC": { rate: 0.450, avg: 4000 },
+    }
+  },
+  AB: {
+    label: "Alberta",
+    cities: {
+      "Calgary": { rate: 0.726, avg: 4200 },
+      "Edmonton": { rate: 0.862, avg: 4500 },
+      "Red Deer": { rate: 1.010, avg: 4000 },
+      "Lethbridge": { rate: 1.080, avg: 3800 },
+      "Medicine Hat": { rate: 1.020, avg: 3500 },
+      "Airdrie": { rate: 0.695, avg: 3800 },
+      "Other Alberta": { rate: 0.850, avg: 4000 },
+    }
+  },
+  QC: {
+    label: "Quebec",
+    cities: {
+      "Montreal": { rate: 0.776, avg: 3800 },
+      "Quebec City": { rate: 1.040, avg: 3900 },
+      "Laval": { rate: 0.888, avg: 3600 },
+      "Longueuil": { rate: 1.050, avg: 3700 },
+      "Gatineau": { rate: 1.100, avg: 3800 },
+      "Sherbrooke": { rate: 1.200, avg: 3500 },
+      "Other Quebec": { rate: 1.000, avg: 3700 },
+    }
+  },
+  MB: {
+    label: "Manitoba",
+    cities: {
+      "Winnipeg": { rate: 1.296, avg: 4200 },
+      "Brandon": { rate: 1.690, avg: 3800 },
+      "Other Manitoba": { rate: 1.400, avg: 4000 },
+    }
+  },
+  SK: {
+    label: "Saskatchewan",
+    cities: {
+      "Saskatoon": { rate: 1.048, avg: 3800 },
+      "Regina": { rate: 1.361, avg: 4200 },
+      "Prince Albert": { rate: 1.820, avg: 3500 },
+      "Other Saskatchewan": { rate: 1.200, avg: 3800 },
+    }
+  },
+  NS: {
+    label: "Nova Scotia",
+    cities: {
+      "Halifax": { rate: 1.192, avg: 5200 },
+      "Dartmouth": { rate: 1.192, avg: 4800 },
+      "Other Nova Scotia": { rate: 1.400, avg: 4200 },
+    }
+  },
+  NB: {
+    label: "New Brunswick",
+    cities: {
+      "Moncton": { rate: 1.785, avg: 4500 },
+      "Saint John": { rate: 2.130, avg: 4200 },
+      "Fredericton": { rate: 1.615, avg: 4000 },
+      "Other New Brunswick": { rate: 1.800, avg: 4000 },
+    }
+  },
+  NL: {
+    label: "Newfoundland",
+    cities: {
+      "St. John's": { rate: 0.810, avg: 3200 },
+      "Other Newfoundland": { rate: 0.900, avg: 3000 },
+    }
+  },
+  PE: {
+    label: "PEI",
+    cities: {
+      "Charlottetown": { rate: 1.100, avg: 3500 },
+      "Other PEI": { rate: 1.000, avg: 3200 },
+    }
+  },
+  NT: { label: "NWT", cities: { "Yellowknife": { rate: 1.200, avg: 4000 }, "Other NWT": { rate: 1.000, avg: 3500 } } },
+  NU: { label: "Nunavut", cities: { "Iqaluit": { rate: 0.800, avg: 3000 }, "Other Nunavut": { rate: 0.800, avg: 3000 } } },
+  YT: { label: "Yukon", cities: { "Whitehorse": { rate: 0.640, avg: 3000 }, "Other Yukon": { rate: 0.640, avg: 3000 } } },
+};
+
+// US: Annual property tax rate as % of home value by state/city
+const US_PROPERTY_TAXES = {
+  AL: { label: "Alabama", cities: { "Birmingham": { rate: 0.67, avg: 2200 }, "Montgomery": { rate: 0.55, avg: 1800 }, "Huntsville": { rate: 0.52, avg: 2000 }, "Other Alabama": { rate: 0.60, avg: 1900 } } },
+  AK: { label: "Alaska", cities: { "Anchorage": { rate: 1.22, avg: 4500 }, "Other Alaska": { rate: 1.10, avg: 4000 } } },
+  AZ: { label: "Arizona", cities: { "Phoenix": { rate: 0.59, avg: 2400 }, "Scottsdale": { rate: 0.56, avg: 3200 }, "Tucson": { rate: 0.60, avg: 1800 }, "Mesa": { rate: 0.59, avg: 2200 }, "Other Arizona": { rate: 0.60, avg: 2200 } } },
+  AR: { label: "Arkansas", cities: { "Little Rock": { rate: 0.64, avg: 1800 }, "Other Arkansas": { rate: 0.62, avg: 1600 } } },
+  CA: { label: "California", cities: { "Los Angeles": { rate: 1.16, avg: 8500 }, "San Francisco": { rate: 0.74, avg: 9200 }, "San Diego": { rate: 0.76, avg: 6800 }, "San Jose": { rate: 0.80, avg: 10500 }, "Sacramento": { rate: 0.88, avg: 4800 }, "Fresno": { rate: 0.85, avg: 3200 }, "Other California": { rate: 0.76, avg: 6500 } } },
+  CO: { label: "Colorado", cities: { "Denver": { rate: 0.49, avg: 3200 }, "Colorado Springs": { rate: 0.47, avg: 2400 }, "Aurora": { rate: 0.52, avg: 3000 }, "Boulder": { rate: 0.48, avg: 4200 }, "Other Colorado": { rate: 0.50, avg: 2800 } } },
+  CT: { label: "Connecticut", cities: { "Hartford": { rate: 3.39, avg: 8500 }, "New Haven": { rate: 2.89, avg: 7200 }, "Stamford": { rate: 1.74, avg: 12000 }, "Other Connecticut": { rate: 2.14, avg: 7500 } } },
+  DE: { label: "Delaware", cities: { "Wilmington": { rate: 1.77, avg: 3800 }, "Dover": { rate: 0.57, avg: 2000 }, "Other Delaware": { rate: 0.57, avg: 2200 } } },
+  FL: { label: "Florida", cities: { "Miami": { rate: 0.97, avg: 5200 }, "Orlando": { rate: 0.91, avg: 3200 }, "Tampa": { rate: 0.90, avg: 3800 }, "Jacksonville": { rate: 0.89, avg: 3200 }, "Fort Lauderdale": { rate: 1.07, avg: 5800 }, "Sarasota": { rate: 0.83, avg: 4500 }, "Other Florida": { rate: 0.91, avg: 3800 } } },
+  GA: { label: "Georgia", cities: { "Atlanta": { rate: 1.01, avg: 4500 }, "Savannah": { rate: 1.08, avg: 3200 }, "Augusta": { rate: 0.89, avg: 2200 }, "Other Georgia": { rate: 0.92, avg: 2800 } } },
+  HI: { label: "Hawaii", cities: { "Honolulu": { rate: 0.31, avg: 2500 }, "Maui": { rate: 0.29, avg: 3200 }, "Other Hawaii": { rate: 0.30, avg: 2500 } } },
+  ID: { label: "Idaho", cities: { "Boise": { rate: 0.63, avg: 3200 }, "Nampa": { rate: 0.72, avg: 2800 }, "Other Idaho": { rate: 0.63, avg: 2500 } } },
+  IL: { label: "Illinois", cities: { "Chicago": { rate: 2.08, avg: 6800 }, "Aurora": { rate: 2.71, avg: 6200 }, "Rockford": { rate: 2.84, avg: 4500 }, "Springfield": { rate: 2.40, avg: 4200 }, "Other Illinois": { rate: 2.27, avg: 5500 } } },
+  IN: { label: "Indiana", cities: { "Indianapolis": { rate: 0.85, avg: 2200 }, "Fort Wayne": { rate: 0.84, avg: 1800 }, "Evansville": { rate: 0.89, avg: 1800 }, "Other Indiana": { rate: 0.85, avg: 2000 } } },
+  IA: { label: "Iowa", cities: { "Des Moines": { rate: 1.57, avg: 3800 }, "Cedar Rapids": { rate: 1.59, avg: 3500 }, "Other Iowa": { rate: 1.57, avg: 3200 } } },
+  KS: { label: "Kansas", cities: { "Wichita": { rate: 1.41, avg: 3200 }, "Overland Park": { rate: 1.28, avg: 4500 }, "Other Kansas": { rate: 1.40, avg: 3200 } } },
+  KY: { label: "Kentucky", cities: { "Louisville": { rate: 0.86, avg: 2500 }, "Lexington": { rate: 0.87, avg: 2800 }, "Other Kentucky": { rate: 0.86, avg: 2200 } } },
+  LA: { label: "Louisiana", cities: { "New Orleans": { rate: 0.55, avg: 2000 }, "Baton Rouge": { rate: 0.52, avg: 1800 }, "Other Louisiana": { rate: 0.55, avg: 1800 } } },
+  ME: { label: "Maine", cities: { "Portland": { rate: 1.52, avg: 5500 }, "Bangor": { rate: 1.72, avg: 4200 }, "Other Maine": { rate: 1.36, avg: 3800 } } },
+  MD: { label: "Maryland", cities: { "Baltimore": { rate: 2.25, avg: 5200 }, "Rockville": { rate: 1.10, avg: 7500 }, "Annapolis": { rate: 0.88, avg: 5800 }, "Other Maryland": { rate: 1.09, avg: 5500 } } },
+  MA: { label: "Massachusetts", cities: { "Boston": { rate: 1.04, avg: 8500 }, "Worcester": { rate: 1.57, avg: 5200 }, "Cambridge": { rate: 0.64, avg: 8800 }, "Springfield": { rate: 1.68, avg: 3800 }, "Other Massachusetts": { rate: 1.23, avg: 6500 } } },
+  MI: { label: "Michigan", cities: { "Detroit": { rate: 2.83, avg: 4200 }, "Grand Rapids": { rate: 1.68, avg: 4500 }, "Ann Arbor": { rate: 1.59, avg: 8500 }, "Other Michigan": { rate: 1.54, avg: 4200 } } },
+  MN: { label: "Minnesota", cities: { "Minneapolis": { rate: 1.25, avg: 5200 }, "St. Paul": { rate: 1.47, avg: 4800 }, "Rochester": { rate: 1.22, avg: 4500 }, "Other Minnesota": { rate: 1.12, avg: 4200 } } },
+  MS: { label: "Mississippi", cities: { "Jackson": { rate: 1.01, avg: 1800 }, "Other Mississippi": { rate: 0.81, avg: 1600 } } },
+  MO: { label: "Missouri", cities: { "Kansas City": { rate: 1.24, avg: 3200 }, "St. Louis": { rate: 1.58, avg: 3800 }, "Springfield": { rate: 1.08, avg: 2200 }, "Other Missouri": { rate: 0.97, avg: 2800 } } },
+  MT: { label: "Montana", cities: { "Billings": { rate: 0.84, avg: 3200 }, "Missoula": { rate: 0.93, avg: 4000 }, "Other Montana": { rate: 0.84, avg: 3000 } } },
+  NE: { label: "Nebraska", cities: { "Omaha": { rate: 2.24, avg: 5200 }, "Lincoln": { rate: 1.81, avg: 4200 }, "Other Nebraska": { rate: 1.73, avg: 4000 } } },
+  NV: { label: "Nevada", cities: { "Las Vegas": { rate: 0.60, avg: 2800 }, "Henderson": { rate: 0.57, avg: 3200 }, "Reno": { rate: 0.59, avg: 3500 }, "Other Nevada": { rate: 0.59, avg: 2800 } } },
+  NH: { label: "New Hampshire", cities: { "Manchester": { rate: 2.10, avg: 6500 }, "Nashua": { rate: 2.04, avg: 7200 }, "Other New Hampshire": { rate: 2.18, avg: 6500 } } },
+  NJ: { label: "New Jersey", cities: { "Newark": { rate: 3.43, avg: 8500 }, "Jersey City": { rate: 1.63, avg: 7800 }, "Trenton": { rate: 3.39, avg: 6200 }, "Edison": { rate: 2.81, avg: 11500 }, "Other New Jersey": { rate: 2.49, avg: 9500 } } },
+  NM: { label: "New Mexico", cities: { "Albuquerque": { rate: 0.77, avg: 2200 }, "Santa Fe": { rate: 0.46, avg: 2800 }, "Other New Mexico": { rate: 0.67, avg: 1800 } } },
+  NY: { label: "New York", cities: { "New York City": { rate: 0.88, avg: 9500 }, "Buffalo": { rate: 2.89, avg: 5800 }, "Rochester": { rate: 2.96, avg: 5200 }, "Syracuse": { rate: 2.76, avg: 4800 }, "Albany": { rate: 2.33, avg: 5500 }, "Other New York": { rate: 1.72, avg: 6500 } } },
+  NC: { label: "North Carolina", cities: { "Charlotte": { rate: 0.91, avg: 3800 }, "Raleigh": { rate: 0.84, avg: 4200 }, "Greensboro": { rate: 0.86, avg: 2800 }, "Durham": { rate: 1.13, avg: 4500 }, "Other North Carolina": { rate: 0.84, avg: 3200 } } },
+  ND: { label: "North Dakota", cities: { "Fargo": { rate: 1.09, avg: 3500 }, "Other North Dakota": { rate: 0.98, avg: 3000 } } },
+  OH: { label: "Ohio", cities: { "Columbus": { rate: 1.67, avg: 4200 }, "Cleveland": { rate: 1.85, avg: 3500 }, "Cincinnati": { rate: 1.53, avg: 3800 }, "Toledo": { rate: 1.79, avg: 2800 }, "Other Ohio": { rate: 1.59, avg: 3500 } } },
+  OK: { label: "Oklahoma", cities: { "Oklahoma City": { rate: 1.09, avg: 2800 }, "Tulsa": { rate: 1.12, avg: 2800 }, "Other Oklahoma": { rate: 0.90, avg: 2400 } } },
+  OR: { label: "Oregon", cities: { "Portland": { rate: 0.91, avg: 6200 }, "Salem": { rate: 0.98, avg: 3800 }, "Eugene": { rate: 0.97, avg: 4500 }, "Other Oregon": { rate: 0.91, avg: 4200 } } },
+  PA: { label: "Pennsylvania", cities: { "Philadelphia": { rate: 1.56, avg: 5500 }, "Pittsburgh": { rate: 2.14, avg: 4800 }, "Allentown": { rate: 2.31, avg: 4200 }, "Other Pennsylvania": { rate: 1.58, avg: 4200 } } },
+  RI: { label: "Rhode Island", cities: { "Providence": { rate: 1.63, avg: 5500 }, "Warwick": { rate: 1.81, avg: 5200 }, "Other Rhode Island": { rate: 1.63, avg: 5000 } } },
+  SC: { label: "South Carolina", cities: { "Charleston": { rate: 0.42, avg: 2800 }, "Columbia": { rate: 0.49, avg: 2200 }, "Myrtle Beach": { rate: 0.36, avg: 2200 }, "Other South Carolina": { rate: 0.57, avg: 2000 } } },
+  SD: { label: "South Dakota", cities: { "Sioux Falls": { rate: 1.14, avg: 3800 }, "Other South Dakota": { rate: 1.21, avg: 3200 } } },
+  TN: { label: "Tennessee", cities: { "Nashville": { rate: 0.72, avg: 3500 }, "Memphis": { rate: 1.34, avg: 2800 }, "Knoxville": { rate: 0.66, avg: 2500 }, "Chattanooga": { rate: 0.92, avg: 2800 }, "Other Tennessee": { rate: 0.71, avg: 2800 } } },
+  TX: { label: "Texas", cities: { "Houston": { rate: 2.09, avg: 6200 }, "Dallas": { rate: 2.22, avg: 7500 }, "Austin": { rate: 1.97, avg: 9500 }, "San Antonio": { rate: 2.35, avg: 5500 }, "Fort Worth": { rate: 2.36, avg: 6500 }, "El Paso": { rate: 2.10, avg: 3800 }, "Other Texas": { rate: 1.80, avg: 5500 } } },
+  UT: { label: "Utah", cities: { "Salt Lake City": { rate: 0.64, avg: 4200 }, "Provo": { rate: 0.66, avg: 4500 }, "Ogden": { rate: 0.68, avg: 3800 }, "Other Utah": { rate: 0.63, avg: 3800 } } },
+  VT: { label: "Vermont", cities: { "Burlington": { rate: 1.84, avg: 8500 }, "Other Vermont": { rate: 1.83, avg: 6500 } } },
+  VA: { label: "Virginia", cities: { "Virginia Beach": { rate: 0.99, avg: 4500 }, "Norfolk": { rate: 1.25, avg: 3800 }, "Richmond": { rate: 1.20, avg: 4500 }, "Arlington": { rate: 0.91, avg: 9500 }, "Other Virginia": { rate: 0.82, avg: 4500 } } },
+  WA: { label: "Washington", cities: { "Seattle": { rate: 0.93, avg: 9200 }, "Spokane": { rate: 1.11, avg: 4200 }, "Tacoma": { rate: 1.04, avg: 5200 }, "Bellevue": { rate: 0.87, avg: 12000 }, "Other Washington": { rate: 0.93, avg: 6500 } } },
+  WV: { label: "West Virginia", cities: { "Charleston": { rate: 0.59, avg: 1600 }, "Other West Virginia": { rate: 0.59, avg: 1400 } } },
+  WI: { label: "Wisconsin", cities: { "Milwaukee": { rate: 2.45, avg: 5500 }, "Madison": { rate: 1.95, avg: 7200 }, "Green Bay": { rate: 2.05, avg: 4200 }, "Other Wisconsin": { rate: 1.85, avg: 4500 } } },
+  WY: { label: "Wyoming", cities: { "Cheyenne": { rate: 0.61, avg: 2800 }, "Other Wyoming": { rate: 0.61, avg: 2500 } } },
+  DC: { label: "Washington DC", cities: { "Washington DC": { rate: 0.56, avg: 7800 }, "Other DC": { rate: 0.56, avg: 7800 } } },
+};
 
 const FAQ = [
   { q: "What is CMHC insurance and do I need it in Canada?", a: "CMHC (Canada Mortgage and Housing Corporation) mortgage default insurance is required if your down payment is less than 20% of the home price. The premium ranges from 2.8% to 4% of the mortgage amount depending on your down payment. It can be added to your mortgage but in Ontario, Quebec, and Saskatchewan, the provincial sales tax on the premium must be paid in cash at closing — many first-time buyers miss this." },
@@ -314,6 +499,7 @@ export default function MortgageCalculator() {
   const [province, setProvince] = useState("ON");
   const [usState, setUsState] = useState("CA");
   const [city, setCity] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(true);
   const [homePrice, setHomePrice] = useState(700000);
   const [downPct, setDownPct] = useState(10);
@@ -563,38 +749,79 @@ Calculated at MortgageHive.app`;
                 <div className="card">
                   <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12, color: "var(--text)" }}>Home details</div>
 
-                  {/* Location */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-                    <div>
-                      <div className="label"><span>{country === "CA" ? "Province" : "State"}</span></div>
-                      {country === "CA" ? (
-                        <select className="select" value={province} onChange={e => setProvince(e.target.value)}>
-                          {CA_PROVINCES.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                        </select>
-                      ) : (
-                        <select className="select" value={usState} onChange={e => setUsState(e.target.value)}>
-                          {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      )}
-                    </div>
-                    {country === "CA" && province === "ON" && (
+                  {/* Location — province/state + city with auto-fill */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                       <div>
-                        <div className="label"><span>City (for Toronto MLTT)</span></div>
-                        <select className="select" value={city} onChange={e => setCity(e.target.value)}>
-                          <option value="">Other Ontario</option>
-                          <option value="Toronto">Toronto</option>
+                        <div className="label"><span>{country === "CA" ? "Province" : "State"}</span></div>
+                        {country === "CA" ? (
+                          <select className="select" value={province} onChange={e => {
+                            setProvince(e.target.value);
+                            setSelectedCity("");
+                            setCity("");
+                          }}>
+                            {Object.entries(CA_PROPERTY_TAXES).map(([code, data]) => (
+                              <option key={code} value={code}>{data.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <select className="select" value={usState} onChange={e => {
+                            setUsState(e.target.value);
+                            setSelectedCity("");
+                          }}>
+                            {Object.entries(US_PROPERTY_TAXES).map(([code, data]) => (
+                              <option key={code} value={code}>{data.label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      <div>
+                        <div className="label"><span>City <span style={{ color: "var(--green)", fontSize: 10 }}>— auto-fills tax rate</span></span></div>
+                        <select className="select" value={selectedCity} onChange={e => {
+                          const cityName = e.target.value;
+                          setSelectedCity(cityName);
+                          if (country === "CA" && province === "ON") {
+                            setCity(cityName === "Toronto" ? "Toronto" : "");
+                          }
+                          if (cityName) {
+                            const taxData = getPropertyTaxFromLocation(country, province, usState, cityName);
+                            if (taxData) {
+                              const monthly = Math.round(taxData.avg / 12);
+                              setTaxes(monthly);
+                            }
+                          }
+                        }}>
+                          <option value="">Select city...</option>
+                          {country === "CA"
+                            ? Object.keys(CA_PROPERTY_TAXES[province]?.cities || {}).map(c => (
+                                <option key={c} value={c}>{c} — {CA_PROPERTY_TAXES[province].cities[c].rate.toFixed(2)}% tax rate</option>
+                              ))
+                            : Object.keys(US_PROPERTY_TAXES[usState]?.cities || {}).map(c => (
+                                <option key={c} value={c}>{c} — {US_PROPERTY_TAXES[usState].cities[c].rate.toFixed(2)}% tax rate</option>
+                              ))
+                          }
                         </select>
                       </div>
-                    )}
-                    <div>
-                      <div className="label"><span>First-time buyer?</span></div>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        {["Yes", "No"].map(v => (
-                          <button key={v} onClick={() => setIsFirstTime(v === "Yes")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: `1px solid ${isFirstTime === (v === "Yes") ? "var(--green)" : "var(--border2)"}`, background: isFirstTime === (v === "Yes") ? "var(--green-dim)" : "transparent", color: isFirstTime === (v === "Yes") ? "var(--green)" : "var(--text2)", fontSize: 13, fontWeight: 700 }}>
-                            {v}
-                          </button>
-                        ))}
-                      </div>
+                    </div>
+                    {selectedCity && (() => {
+                      const taxData = getPropertyTaxFromLocation(country, province, usState, selectedCity);
+                      if (!taxData) return null;
+                      return (
+                        <div style={{ fontSize: 11, color: "var(--green)", padding: "5px 10px", background: "var(--green-dim)", borderRadius: 6, display: "flex", gap: 8 }}>
+                          <span>✅ Property tax auto-filled for {selectedCity}:</span>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700 }}>{taxData.rate.toFixed(2)}% rate · avg {fmtC(Math.round(taxData.avg / 12))}/mo</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <div className="label"><span>First-time buyer?</span></div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {["Yes", "No"].map(v => (
+                        <button key={v} onClick={() => setIsFirstTime(v === "Yes")} style={{ flex: 1, padding: "7px", borderRadius: 8, border: `1px solid ${isFirstTime === (v === "Yes") ? "var(--green)" : "var(--border2)"}`, background: isFirstTime === (v === "Yes") ? "var(--green-dim)" : "transparent", color: isFirstTime === (v === "Yes") ? "var(--green)" : "var(--text2)", fontSize: 13, fontWeight: 700 }}>
+                          {v}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -636,14 +863,19 @@ Calculated at MortgageHive.app`;
                   <div style={{ marginBottom: 14 }}>
                     <div className="label"><span>Amortization</span><span className="val">{years} years</span></div>
                     <div style={{ display: "flex", gap: 5 }}>
-                      {(country === "CA" ? [20, 25] : [15, 20, 25, 30]).map(y => (
+                      {(country === "CA"
+                        ? (isFirstTime || downPct >= 20) ? [20, 25, 30] : [20, 25]
+                        : [15, 20, 25, 30]).map(y => (
                         <button key={y} onClick={() => setYears(y)} style={{ flex: 1, padding: "7px", borderRadius: 8, border: `1px solid ${years === y ? "var(--green)" : "var(--border2)"}`, background: years === y ? "var(--green-dim)" : "transparent", color: years === y ? "var(--green)" : "var(--text2)", fontSize: 13, fontWeight: 700 }}>
                           {y}yr
                         </button>
                       ))}
                     </div>
-                    {country === "CA" && downPct < 20 && years > 25 && (
-                      <div style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>⚠️ CMHC insured mortgages max 25-year amortization</div>
+                    {country === "CA" && downPct < 20 && years === 30 && !isFirstTime && (
+                      <div style={{ fontSize: 11, color: "var(--red)", marginTop: 4 }}>⚠️ 30-year insured mortgages are only available to first-time buyers or new construction (as of Dec 15, 2024)</div>
+                    )}
+                    {country === "CA" && downPct < 20 && years === 30 && isFirstTime && (
+                      <div style={{ fontSize: 11, color: "var(--green)", marginTop: 4 }}>✅ You qualify for 30-year amortization as a first-time buyer (effective Dec 15, 2024)</div>
                     )}
                   </div>
 
