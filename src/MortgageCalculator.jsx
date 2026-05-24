@@ -672,6 +672,49 @@ export default function MortgageCalculator() {
 
   useEffect(() => { localStorage.setItem("mh_theme", lightMode ? "light" : "dark"); }, [lightMode]);
 
+  // ── Read URL params on load for SEO landing pages ─────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prov = params.get("province");
+    const state = params.get("state");
+    const city = params.get("city");
+    const hp = params.get("price");
+    const cntry = params.get("country");
+
+    if (cntry === "US") setCountry("US");
+    if (prov && CA_PROPERTY_TAXES[prov]) {
+      setCountry("CA");
+      setProvince(prov);
+      // Auto-fill province average tax rate
+      const provData = CA_PROPERTY_TAXES[prov];
+      const firstCity = Object.values(provData.cities)[0];
+      if (firstCity) setTaxes(Math.round(firstCity.avg / 12));
+    }
+    if (state && US_PROPERTY_TAXES[state]) {
+      setCountry("US");
+      setUsState(state);
+      const stateData = US_PROPERTY_TAXES[state];
+      const firstCity = Object.values(stateData.cities)[0];
+      if (firstCity) setTaxes(Math.round(firstCity.avg / 12));
+    }
+    if (city) {
+      setCitySearch(city);
+      setSelectedCity(city);
+    }
+    if (hp) setHomePrice(parseInt(hp));
+
+    // Update document title dynamically for SEO
+    const updateTitle = () => {
+      const locationStr = city ? city + ", " + (prov || state || "") : (prov ? CA_PROPERTY_TAXES[prov]?.label || prov : state || "Canada & US");
+      document.title = `Mortgage Calculator — ${locationStr} | MortgageHive`;
+      const metaDesc = document.querySelector("meta[name=description]");
+      if (metaDesc) metaDesc.setAttribute("content",
+        `Free mortgage calculator for ${locationStr}. Includes CMHC insurance, land transfer tax, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker. No signup required.`
+      );
+    };
+    updateTitle();
+  }, []);
+
   const lm = lightMode;
 
   // Core calculations
@@ -745,6 +788,20 @@ export default function MortgageCalculator() {
   })();
 
   const dtiColor = backDTI < 36 ? "#22c55e" : backDTI < 43 ? "#f59e0b" : "#ef4444";
+
+  // Generate shareable URL with all current inputs encoded
+  const getShareURL = () => {
+    const params = new URLSearchParams();
+    params.set("country", country);
+    if (country === "CA") params.set("province", province);
+    else params.set("state", usState);
+    if (selectedCity) params.set("city", selectedCity);
+    params.set("price", homePrice);
+    params.set("down", downPct);
+    params.set("rate", rate);
+    params.set("years", years);
+    return window.location.origin + window.location.pathname + "?" + params.toString();
+  };
 
   const copy = () => {
     const text = `MortgageHive Summary — ${country === "CA" ? province : usState}
@@ -851,7 +908,9 @@ Calculated at MortgageHive.app`;
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#15803d,#166534)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏠</div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.5px" }}>Mortgage<span style={{ color: "var(--green)" }}>Hive</span></div>
-              <div style={{ fontSize: 10, color: "var(--text2)", fontWeight: 600 }}>Complete guide for Canada & US · No signup</div>
+              <div style={{ fontSize: 10, color: "var(--text2)", fontWeight: 600 }}>
+                {selectedCity ? `${selectedCity} · ` : ""}{country === "CA" ? (CA_PROPERTY_TAXES[province]?.label || "Canada") : (US_PROPERTY_TAXES[usState]?.label || "US")} · Free · No signup
+              </div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -865,7 +924,11 @@ Calculated at MortgageHive.app`;
             </div>
             <button onClick={() => setLightMode(v => !v)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", fontSize: 15 }}>{lightMode ? "🌙" : "☀️"}</button>
             <button onClick={copy} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: copied ? "var(--green-dim)" : "transparent", color: copied ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700 }}>
-              {copied ? "✓ Copied!" : "📋 Share"}
+              {copied ? "✓ Copied!" : "📋 Results"}
+            </button>
+            <button onClick={() => { navigator.clipboard.writeText(getShareURL()); setCopied("url"); setTimeout(() => setCopied(false), 2000); }}
+              style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: copied === "url" ? "var(--green-dim)" : "transparent", color: copied === "url" ? "var(--green)" : "var(--text2)", fontSize: 12, fontWeight: 700 }}>
+              {copied === "url" ? "✓ Link copied!" : "🔗 Share calc"}
             </button>
           </div>
         </div>
@@ -892,6 +955,24 @@ Calculated at MortgageHive.app`;
         {/* ── CALCULATOR TAB ── */}
         {tab === "calculator" && (
           <div className="fade-in">
+
+            {/* Live rate banner */}
+            <div style={{ marginBottom: 14, padding: "10px 16px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--green)", animation: "pulse 2s infinite" }} />
+                <span style={{ fontSize: 12, color: "var(--text2)" }}>
+                  {country === "CA"
+                    ? <span>🇨🇦 Bank of Canada prime rate: <strong style={{ color: "var(--green)", fontFamily: "'DM Mono',monospace" }}>7.20%</strong> · Avg 5-yr fixed: <strong style={{ color: "var(--text)", fontFamily: "'DM Mono',monospace" }}>5.49%</strong></span>
+                    : <span>🇺🇸 Fed funds rate: <strong style={{ color: "var(--green)", fontFamily: "'DM Mono',monospace" }}>5.33%</strong> · Avg 30-yr fixed: <strong style={{ color: "var(--text)", fontFamily: "'DM Mono',monospace" }}>6.87%</strong></span>
+                  }
+                </span>
+              </div>
+              <a href={country === "CA" ? "https://www.ratehub.ca" : "https://www.credible.com/mortgage"} target="_blank" rel="noopener noreferrer sponsored"
+                style={{ fontSize: 11, color: "var(--green)", fontWeight: 700, textDecoration: "none" }}>
+                Get today's personalized rate →
+              </a>
+            </div>
+
             <div className="grid2">
               {/* LEFT */}
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -2169,7 +2250,11 @@ Calculated at MortgageHive.app`;
                 </div>
                 <button onClick={() => window.print()} style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                   🖨️ Print Report
-                </button>
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(getShareURL()); setCopied("report"); setTimeout(() => setCopied(false), 2000); }}
+                      style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                      {copied === "report" ? "✓ Copied!" : "🔗 Share Report"}
+                    </button>
               </div>
 
               <div style={{ padding: "20px 22px", background: "var(--bg2)" }}>
@@ -2296,6 +2381,31 @@ Calculated at MortgageHive.app`;
           );
         })()}
 
+        {/* ── WHITE LABEL EMBED ── */}
+        <div style={{ marginTop: 40, padding: 22, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14 }}>
+          <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>📦 Embed MortgageHive on Your Website</div>
+          <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 14, lineHeight: 1.7 }}>
+            Realtors, mortgage brokers, and finance blogs — add the most complete mortgage calculator to your site. Free embed with MortgageHive branding, or contact us for white-label licensing with your own branding.
+          </p>
+          <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", fontFamily: "'DM Mono',monospace", fontSize: 11, color: "var(--green)", wordBreak: "break-all", marginBottom: 10 }}>
+            {`<iframe src="https://mortgagehive.vercel.app${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button onClick={() => {
+              const code = `<iframe src="https://mortgagehive.vercel.app${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`;
+              navigator.clipboard.writeText(code);
+              setCopied("embed");
+              setTimeout(() => setCopied(false), 2000);
+            }} className="action-btn" style={{ padding: "8px 18px", background: "var(--green)", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              {copied === "embed" ? "✓ Copied!" : "Copy embed code"}
+            </button>
+            <a href="mailto:hello@docvaultpro.com?subject=MortgageHive White-Label License" style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid var(--border)", color: "var(--text2)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+              💼 Enquire about white-label →
+            </a>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 10 }}>White-label licenses available for realtors, mortgage brokers, and real estate platforms. Custom branding, pre-loaded city data, and lead capture. Email hello@docvaultpro.com</p>
+        </div>
+
         {/* ── FAQ ── */}
         <div style={{ marginTop: 48 }}>
           <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 18, color: "var(--text)" }}>
@@ -2327,8 +2437,21 @@ Calculated at MortgageHive.app`;
             No signup required. No personal information collected. No spam. Built for first-time home buyers, newcomers to Canada, investors, and anyone making the biggest financial decision of their life.
           </p>
           <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {["Mortgage Calculator Canada","CMHC Calculator","Land Transfer Tax Ontario","Mortgage Stress Test","Mortgage Affordability","Amortization Schedule","Rent vs Buy Canada","Mortgage Renewal Calculator","First Time Home Buyer Canada","Mortgage Calculator BC","Mortgage Calculator Alberta","Mortgage Calculator Ontario"].map(tag => (
-              <span key={tag} style={{ fontSize: 10, padding: "3px 9px", borderRadius: 20, background: "var(--bg3)", color: "var(--text3)", border: "1px solid var(--border2)" }}>{tag}</span>
+            {[
+              { label: "Ontario Mortgage Calculator", url: "?country=CA&province=ON" },
+              { label: "BC Mortgage Calculator", url: "?country=CA&province=BC" },
+              { label: "Alberta Mortgage Calculator", url: "?country=CA&province=AB" },
+              { label: "Quebec Mortgage Calculator", url: "?country=CA&province=QC" },
+              { label: "Toronto Mortgage Calculator", url: "?country=CA&province=ON&city=Toronto" },
+              { label: "Vancouver Mortgage Calculator", url: "?country=CA&province=BC&city=Vancouver" },
+              { label: "Calgary Mortgage Calculator", url: "?country=CA&province=AB&city=Calgary" },
+              { label: "CMHC Calculator", url: "?country=CA&province=ON" },
+              { label: "Texas Mortgage Calculator", url: "?country=US&state=TX" },
+              { label: "California Mortgage Calculator", url: "?country=US&state=CA" },
+              { label: "Florida Mortgage Calculator", url: "?country=US&state=FL" },
+              { label: "Mortgage Stress Test Canada", url: "?country=CA&province=ON" },
+            ].map(tag => (
+              <a key={tag.label} href={tag.url} style={{ fontSize: 10, padding: "3px 9px", borderRadius: 20, background: "var(--bg3)", color: "var(--text3)", border: "1px solid var(--border2)", textDecoration: "none" }}>{tag.label}</a>
             ))}
           </div>
         </div>
