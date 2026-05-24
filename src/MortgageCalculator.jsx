@@ -211,75 +211,80 @@ async function searchCitiesGeoNames(query, country, setResults, setLoading) {
   setLoading(true);
   try {
     const cc = country === "CA" ? "CA" : "US";
-    const url = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&country=${cc}&maxRows=10&featureClass=P&featureCode=PPL&featureCode=PPLA&featureCode=PPLA2&featureCode=PPLC&orderby=population&style=SHORT&username=docvault`;
+    const url = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&country=${cc}&maxRows=10&featureClass=P&orderby=population&style=MEDIUM&username=docvault`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.status) { setLoading(false); setResults([]); return; }
     if (data.geonames) {
       setResults(data.geonames.map(g => ({
         name: g.name,
-        adminName: g.adminName1,
-        countryCode: g.countryCode,
-        lat: parseFloat(g.lat),
-        lng: parseFloat(g.lng),
-        tz: g.timezone?.timeZoneId || null,
-        pop: g.population,
-      })).filter(g => g.tz));
+        adminName: g.adminName1 || "",
+        adminName1: g.adminName1 || "",
+        countryCode: g.countryCode || "",
+        lat: parseFloat(g.lat) || 0,
+        lng: parseFloat(g.lng) || 0,
+        tz: g.timezone?.timeZoneId || g.timezone || null,
+        pop: parseInt(g.population) || 0,
+      })).filter(g => g.name));
     }
   } catch (e) { setResults([]); }
   setLoading(false);
 }
 
 // Map GeoNames admin region to our tax database key
+const CA_PROV_MAP = {
+  "Ontario": "ON", "British Columbia": "BC", "Alberta": "AB", "Quebec": "QC",
+  "Manitoba": "MB", "Saskatchewan": "SK", "Nova Scotia": "NS", "New Brunswick": "NB",
+  "Newfoundland and Labrador": "NL", "Newfoundland": "NL", "Prince Edward Island": "PE",
+  "Northwest Territories": "NT", "Nunavut": "NU", "Yukon": "YT", "Yukon Territory": "YT",
+};
+const US_STATE_MAP = {
+  "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA",
+  "Colorado":"CO","Connecticut":"CT","Delaware":"DE","Florida":"FL","Georgia":"GA",
+  "Hawaii":"HI","Idaho":"ID","Illinois":"IL","Indiana":"IN","Iowa":"IA","Kansas":"KS",
+  "Kentucky":"KY","Louisiana":"LA","Maine":"ME","Maryland":"MD","Massachusetts":"MA",
+  "Michigan":"MI","Minnesota":"MN","Mississippi":"MS","Missouri":"MO","Montana":"MT",
+  "Nebraska":"NE","Nevada":"NV","New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM",
+  "New York":"NY","North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK",
+  "Oregon":"OR","Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC",
+  "South Dakota":"SD","Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT",
+  "Virginia":"VA","Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY",
+  "District of Columbia":"DC","Washington, D.C.":"DC",
+};
+
 function getTaxForGeoCity(city, country, provinceCode, usStateCode) {
-  const adminName = city.adminName || "";
-  // Try to match admin region to our tax DB
+  const adminName = city.adminName1 || city.adminName || "";
   if (country === "CA") {
-    const provMap = {
-      "Ontario": "ON", "British Columbia": "BC", "Alberta": "AB", "Quebec": "QC",
-      "Manitoba": "MB", "Saskatchewan": "SK", "Nova Scotia": "NS", "New Brunswick": "NB",
-      "Newfoundland and Labrador": "NL", "Prince Edward Island": "PE",
-      "Northwest Territories": "NT", "Nunavut": "NU", "Yukon": "YT"
-    };
-    const prov = provMap[adminName] || provinceCode;
+    // Resolve province code from GeoNames adminName1
+    const prov = CA_PROV_MAP[adminName] || provinceCode;
     const provData = CA_PROPERTY_TAXES[prov];
-    if (!provData) return null;
-    // Try exact city match first
+    if (!provData) return { key: prov, cityKey: null, rate: 1.0, avg: 5000 };
+    // Try exact city match (case-insensitive)
+    const cityLower = city.name.toLowerCase();
     const exactMatch = Object.entries(provData.cities).find(([k]) =>
-      k.toLowerCase() === city.name.toLowerCase() ||
-      k.toLowerCase().replace(/ on$/, "") === city.name.toLowerCase()
+      k.toLowerCase() === cityLower ||
+      k.toLowerCase().replace(/ on$/, "").replace(/ ca$/, "") === cityLower
     );
     if (exactMatch) return { key: prov, cityKey: exactMatch[0], ...exactMatch[1] };
-    // Fall back to "Other {Province}"
+    // Fall back to province average
     const fallbackKey = `Other ${provData.label}`;
     if (provData.cities[fallbackKey]) return { key: prov, cityKey: fallbackKey, ...provData.cities[fallbackKey] };
-    return null;
+    // Last resort — use first city in province
+    const firstCity = Object.values(provData.cities)[0];
+    return { key: prov, cityKey: null, ...firstCity };
   } else {
-    const stateMap = {
-      "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-      "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-      "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-      "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-      "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-      "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-      "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-      "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-      "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-      "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-      "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-      "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-      "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
-    };
-    const state = stateMap[adminName] || usStateCode;
+    const state = US_STATE_MAP[adminName] || usStateCode;
     const stateData = US_PROPERTY_TAXES[state];
-    if (!stateData) return null;
+    if (!stateData) return { key: state, cityKey: null, rate: 1.0, avg: 4000 };
+    const cityLower = city.name.toLowerCase();
     const exactMatch = Object.entries(stateData.cities).find(([k]) =>
-      k.toLowerCase() === city.name.toLowerCase()
+      k.toLowerCase() === cityLower
     );
     if (exactMatch) return { key: state, cityKey: exactMatch[0], ...exactMatch[1] };
     const fallbackKey = `Other ${stateData.label}`;
     if (stateData.cities[fallbackKey]) return { key: state, cityKey: fallbackKey, ...stateData.cities[fallbackKey] };
-    return null;
+    const firstCity = Object.values(stateData.cities)[0];
+    return { key: state, cityKey: null, ...firstCity };
   }
 }
 
@@ -974,16 +979,15 @@ Calculated at MortgageHive.app`;
                         )}
                       </div>
                     </div>
-                    {selectedCity && (() => {
-                      const taxData = getPropertyTaxFromLocation(country, province, usState, selectedCity);
-                      if (!taxData) return null;
-                      return (
-                        <div style={{ fontSize: 11, color: "var(--green)", padding: "5px 10px", background: "var(--green-dim)", borderRadius: 6, display: "flex", gap: 8 }}>
-                          <span>✅ Property tax auto-filled for {selectedCity}:</span>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700 }}>{taxData.rate.toFixed(2)}% rate · avg {fmtC(Math.round(taxData.avg / 12))}/mo</span>
-                        </div>
-                      );
-                    })()}
+                    {selectedCity && taxes > 0 && (
+                      <div style={{ fontSize: 11, color: "var(--green)", padding: "6px 10px", background: "var(--green-dim)", borderRadius: 6, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                        <span>✅ Tax auto-filled for <strong>{selectedCity}</strong></span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 700 }}>{fmtC(taxes)}/mo</span>
+                        <span style={{ color: "var(--text3)" }}>·</span>
+                        <span style={{ color: "var(--text2)" }}>Province: <strong style={{ color: "var(--green)" }}>{CA_PROPERTY_TAXES[province]?.label || province}</strong></span>
+                        <span style={{ color: "var(--text3)" }}>· LTT calculated for this province</span>
+                      </div>
+                    )}
                   </div>
                   <div style={{ marginBottom: 14 }}>
                     <div className="label"><span>First-time buyer?</span></div>
@@ -1008,9 +1012,17 @@ Calculated at MortgageHive.app`;
                     <input type="range" className="range" min={Math.ceil(minDown)} max={50} step={1} value={downPct} onChange={e => setDownPct(+e.target.value)} />
                   </div>
                   {country === "CA" && downPct < 20 && (
-                    <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 10, padding: "5px 10px", background: "rgba(245,158,11,0.08)", borderRadius: 6 }}>
+                    <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 6, padding: "5px 10px", background: "rgba(245,158,11,0.08)", borderRadius: 6 }}>
                       ⚠️ CMHC insurance required · Premium: {fmtC(cmhc.premium)} added to mortgage
                       {cmhc.tax > 0 && ` · ${fmtC(cmhc.tax)} PST due at closing in ${province}`}
+                    </div>
+                  )}
+                  {country === "CA" && (
+                    <div style={{ fontSize: 11, marginBottom: 10, padding: "6px 10px", background: ltt.total === 0 ? "rgba(74,222,128,0.08)" : "rgba(0,0,0,0.06)", borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ color: "var(--text2)" }}>🏛️ Land Transfer Tax — {CA_PROPERTY_TAXES[province]?.label || province}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 800, color: ltt.total === 0 ? "var(--green)" : "var(--amber)" }}>
+                        {ltt.total === 0 ? "✅ $0 (No LTT in " + (CA_PROPERTY_TAXES[province]?.label || province) + ")" : fmtC(ltt.total) + " at closing"}
+                      </span>
                     </div>
                   )}
                   {country === "US" && downPct < 20 && (
@@ -1172,7 +1184,8 @@ Calculated at MortgageHive.app`;
                     { label: "Loan amount", val: fmtC(loanAmt) },
                     ...(country === "CA" && cmhc.premium > 0 ? [{ label: "CMHC premium (added to loan)", val: fmtC(cmhc.premium), color: "var(--amber)" }] : []),
                     { label: "Total interest paid", val: fmtC(totalInterest), color: "var(--red)" },
-                    { label: "Total cost of home", val: fmtC(homePrice + totalInterest + (country === "CA" ? ltt.total + 1800 + 450 + 300 : usCosts?.total || 0)), color: "var(--text)" },
+                    ...(country === "CA" ? [{ label: `Land transfer tax (${CA_PROPERTY_TAXES[province]?.label || province})`, val: ltt.total === 0 ? "✅ $0 — No LTT" : fmtC(ltt.total), color: ltt.total === 0 ? "var(--green)" : "var(--amber)" }] : []),
+                  { label: "Total cost of home", val: fmtC(homePrice + totalInterest + (country === "CA" ? ltt.total + 1800 + 450 + 300 : usCosts?.total || 0)), color: "var(--text)" },
                   ].map(r => (
                     <div key={r.label} className="br-row">
                       <span style={{ color: "var(--text2)", fontSize: 13 }}>{r.label}</span>
