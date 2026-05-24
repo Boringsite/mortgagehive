@@ -205,6 +205,84 @@ function calcMonthly2(principal, annualRate, years) {
   return (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 }
 
+// ── GeoNames City Search + Tax Lookup ────────────────────────────────────────
+async function searchCitiesGeoNames(query, country, setResults, setLoading) {
+  if (query.length < 3) { setResults([]); return; }
+  setLoading(true);
+  try {
+    const cc = country === "CA" ? "CA" : "US";
+    const url = `https://secure.geonames.org/searchJSON?q=${encodeURIComponent(query)}&country=${cc}&maxRows=10&featureClass=P&featureCode=PPL&featureCode=PPLA&featureCode=PPLA2&featureCode=PPLC&orderby=population&style=SHORT&username=docvault`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status) { setLoading(false); setResults([]); return; }
+    if (data.geonames) {
+      setResults(data.geonames.map(g => ({
+        name: g.name,
+        adminName: g.adminName1,
+        countryCode: g.countryCode,
+        lat: parseFloat(g.lat),
+        lng: parseFloat(g.lng),
+        tz: g.timezone?.timeZoneId || null,
+        pop: g.population,
+      })).filter(g => g.tz));
+    }
+  } catch (e) { setResults([]); }
+  setLoading(false);
+}
+
+// Map GeoNames admin region to our tax database key
+function getTaxForGeoCity(city, country, provinceCode, usStateCode) {
+  const adminName = city.adminName || "";
+  // Try to match admin region to our tax DB
+  if (country === "CA") {
+    const provMap = {
+      "Ontario": "ON", "British Columbia": "BC", "Alberta": "AB", "Quebec": "QC",
+      "Manitoba": "MB", "Saskatchewan": "SK", "Nova Scotia": "NS", "New Brunswick": "NB",
+      "Newfoundland and Labrador": "NL", "Prince Edward Island": "PE",
+      "Northwest Territories": "NT", "Nunavut": "NU", "Yukon": "YT"
+    };
+    const prov = provMap[adminName] || provinceCode;
+    const provData = CA_PROPERTY_TAXES[prov];
+    if (!provData) return null;
+    // Try exact city match first
+    const exactMatch = Object.entries(provData.cities).find(([k]) =>
+      k.toLowerCase() === city.name.toLowerCase() ||
+      k.toLowerCase().replace(/ on$/, "") === city.name.toLowerCase()
+    );
+    if (exactMatch) return { key: prov, cityKey: exactMatch[0], ...exactMatch[1] };
+    // Fall back to "Other {Province}"
+    const fallbackKey = `Other ${provData.label}`;
+    if (provData.cities[fallbackKey]) return { key: prov, cityKey: fallbackKey, ...provData.cities[fallbackKey] };
+    return null;
+  } else {
+    const stateMap = {
+      "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+      "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+      "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+      "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+      "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+      "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+      "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+      "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+      "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+      "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+      "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+      "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+      "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
+    };
+    const state = stateMap[adminName] || usStateCode;
+    const stateData = US_PROPERTY_TAXES[state];
+    if (!stateData) return null;
+    const exactMatch = Object.entries(stateData.cities).find(([k]) =>
+      k.toLowerCase() === city.name.toLowerCase()
+    );
+    if (exactMatch) return { key: state, cityKey: exactMatch[0], ...exactMatch[1] };
+    const fallbackKey = `Other ${stateData.label}`;
+    if (stateData.cities[fallbackKey]) return { key: state, cityKey: fallbackKey, ...stateData.cities[fallbackKey] };
+    return null;
+  }
+}
+
 // ── Mortgage Math ─────────────────────────────────────────────────────────────
 function calcMonthly(principal, annualRate, years) {
   if (annualRate === 0) return principal / (years * 12);
@@ -578,6 +656,10 @@ export default function MortgageCalculator() {
   const [vacancyRate, setVacancyRate] = useState(5);
   const [rentalExpenses, setRentalExpenses] = useState(300);
   const [compareMode, setCompareMode] = useState("scenarios");
+  // GeoNames city search
+  const [citySearch, setCitySearch] = useState("");
+  const [cityResults, setCityResults] = useState([]);
+  const [cityLoading, setCityLoading] = useState(false);
   const [extraPayment, setExtraPayment] = useState(0);
   const [extraPayFreq, setExtraPayFreq] = useState("monthly");
   const [points, setPoints] = useState(0);
@@ -686,6 +768,19 @@ Calculated at MortgageHive.app`;
 
   return (
     <div style={{ fontFamily: "'DM Sans','Plus Jakarta Sans',system-ui,sans-serif", background: lm ? "#f8faf5" : "#0a160b", color: lm ? "#1a2e1c" : "#e8f5e9", minHeight: "100vh", overflowX: "hidden", transition: "background 0.3s" }}>
+      {/* SEO structured data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MortgageHive — Canada & US Mortgage Calculator",
+        "url": "https://mortgagehive.vercel.app",
+        "description": "Free mortgage calculator for Canada and the US. Includes CMHC insurance, land transfer tax by province, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker.",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CAD" },
+        "featureList": ["CMHC Calculator", "Land Transfer Tax", "Stress Test", "Amortization Schedule", "Rent vs Buy", "Affordability Checker", "Extra Payment Calculator", "Points Buydown", "Mortgage Renewal", "Refinance Calculator"]
+      })}} />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
         :root{
@@ -824,32 +919,59 @@ Calculated at MortgageHive.app`;
                           </select>
                         )}
                       </div>
-                      <div>
-                        <div className="label"><span>City <span style={{ color: "var(--green)", fontSize: 10 }}>— auto-fills tax rate</span></span></div>
-                        <select className="select" value={selectedCity} onChange={e => {
-                          const cityName = e.target.value;
-                          setSelectedCity(cityName);
-                          if (country === "CA" && province === "ON") {
-                            setCity(cityName === "Toronto" ? "Toronto" : "");
-                          }
-                          if (cityName) {
-                            const taxData = getPropertyTaxFromLocation(country, province, usState, cityName);
-                            if (taxData) {
-                              const monthly = Math.round(taxData.avg / 12);
-                              setTaxes(monthly);
-                            }
-                          }
-                        }}>
-                          <option value="">Select city...</option>
-                          {country === "CA"
-                            ? Object.keys(CA_PROPERTY_TAXES[province]?.cities || {}).map(c => (
-                                <option key={c} value={c}>{c} — {CA_PROPERTY_TAXES[province].cities[c].rate.toFixed(2)}% tax rate</option>
-                              ))
-                            : Object.keys(US_PROPERTY_TAXES[usState]?.cities || {}).map(c => (
-                                <option key={c} value={c}>{c} — {US_PROPERTY_TAXES[usState].cities[c].rate.toFixed(2)}% tax rate</option>
-                              ))
-                          }
-                        </select>
+                      <div style={{ position: "relative" }}>
+                        <div className="label"><span>City <span style={{ color: "var(--green)", fontSize: 10 }}>— search any city · auto-fills tax</span></span></div>
+                        <input
+                          className="num-input"
+                          placeholder={`Search any ${country === "CA" ? "Canadian" : "US"} city...`}
+                          value={citySearch}
+                          onChange={e => {
+                            setCitySearch(e.target.value);
+                            searchCitiesGeoNames(e.target.value, country, setCityResults, setCityLoading);
+                          }}
+                          style={{ fontFamily: "'DM Sans',system-ui", fontSize: 13 }}
+                        />
+                        {cityLoading && (
+                          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>🔍 Searching cities...</div>
+                        )}
+                        {cityResults.length > 0 && (
+                          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.3)", maxHeight: 220, overflowY: "auto" }}>
+                            {cityResults.map((city, i) => {
+                              const taxData = getTaxForGeoCity(city, country, province, usState);
+                              return (
+                                <div key={i}
+                                  style={{ padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid var(--border2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg3)"}
+                                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                                  onClick={() => {
+                                    setCitySearch(city.name + (city.adminName ? ", " + city.adminName : ""));
+                                    setCityResults([]);
+                                    setSelectedCity(city.name);
+                                    if (country === "CA" && city.name === "Toronto") setCity("Toronto");
+                                    else setCity("");
+                                    if (taxData) {
+                                      setTaxes(Math.round(taxData.avg / 12));
+                                      if (country === "CA" && taxData.key) setProvince(taxData.key);
+                                      if (country === "US" && taxData.key) setUsState(taxData.key);
+                                    }
+                                  }}>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{city.name}</div>
+                                    <div style={{ fontSize: 11, color: "var(--text3)" }}>{city.adminName}{city.pop > 0 ? ` · pop. ${city.pop.toLocaleString()}` : ""}</div>
+                                  </div>
+                                  {taxData ? (
+                                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                      <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 700 }}>{taxData.rate.toFixed(2)}% tax</div>
+                                      <div style={{ fontSize: 10, color: "var(--text3)" }}>{fmtC(Math.round(taxData.avg / 12))}/mo</div>
+                                    </div>
+                                  ) : (
+                                    <div style={{ fontSize: 11, color: "var(--text3)" }}>Select to use</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {selectedCity && (() => {
@@ -1126,6 +1248,18 @@ Calculated at MortgageHive.app`;
                       </div>
                     );
                   })()}
+                </div>
+
+                {/* Insurance affiliate */}
+                <div style={{ padding: "10px 14px", background: "var(--bg3)", borderRadius: 10, border: "1px solid var(--border2)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 160 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>🏠 Overpaying on home insurance?</div>
+                    <div style={{ fontSize: 11, color: "var(--text2)" }}>Buyers save an average of $825/year by comparing rates before closing.</div>
+                  </div>
+                  <a href={country === "CA" ? "https://www.ratehub.ca/home-insurance" : "https://www.policygenius.com/homeowners-insurance"} target="_blank" rel="noopener noreferrer sponsored"
+                    style={{ padding: "7px 14px", borderRadius: 8, background: "var(--green-dim)", border: "1px solid var(--border)", color: "var(--green)", fontSize: 12, fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>
+                    Compare insurance →
+                  </a>
                 </div>
 
                 {/* Canada stress test */}
@@ -1429,6 +1563,18 @@ Calculated at MortgageHive.app`;
                       );
                     })}
                   </div>
+                </div>
+
+                {/* Credit score affiliate */}
+                <div style={{ padding: "12px 14px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 10, marginBottom: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>📊 Check your free credit score</div>
+                    <div style={{ fontSize: 11, color: "var(--text2)" }}>Know your score before applying. {country === "CA" ? "Borrowell checks without affecting your score." : "Credit Karma checks without affecting your score."}</div>
+                  </div>
+                  <a href={country === "CA" ? "https://www.borrowell.com" : "https://www.creditkarma.com"} target="_blank" rel="noopener noreferrer sponsored"
+                    style={{ padding: "7px 14px", borderRadius: 8, background: "var(--green-dim)", border: "1px solid var(--border)", color: "var(--green)", fontSize: 12, fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>
+                    {country === "CA" ? "Check on Borrowell →" : "Check on Credit Karma →"}
+                  </a>
                 </div>
 
                 <div className="card">
@@ -1743,6 +1889,20 @@ Calculated at MortgageHive.app`;
               </div>
             </div>
             </>
+            )}
+
+            {/* Rate comparison affiliate */}
+            {compareMode === "scenarios" && (
+              <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>💡 Get a real rate for Scenario B</div>
+                  <div style={{ fontSize: 12, color: "var(--text2)" }}>Compare personalized rates from multiple lenders — free, no hard credit check.</div>
+                </div>
+                <a href={country === "CA" ? "https://www.ratehub.ca" : "https://www.credible.com/mortgage"} target="_blank" rel="noopener noreferrer sponsored"
+                  style={{ padding: "8px 16px", borderRadius: 8, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>
+                  {country === "CA" ? "Get rate on Ratehub →" : "Get rate on Credible →"}
+                </a>
+              </div>
             )}
           </div>
         )}
@@ -2086,6 +2246,38 @@ Calculated at MortgageHive.app`;
                 <div style={{ marginTop: 10, fontSize: 11, color: "var(--text3)", textAlign: "center" }}>
                   This assessment is based on standard lender guidelines. Actual approval depends on your credit score, employment history, and individual lender criteria. Always get pre-approved for a firm answer.
                 </div>
+
+                {/* HIGH-VALUE AFFILIATE PLACEMENT — Get Pre-Approved */}
+                <div style={{ marginTop: 16, padding: "16px 18px", background: lm ? "linear-gradient(135deg,#f0fdf4,#e8f5e9)" : "linear-gradient(135deg,#0d2010,#111f12)", border: "1px solid var(--border)", borderRadius: 12 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
+                    {overallOk ? "✅ Ready to get pre-approved? Compare real rates from multiple lenders." : "📋 Not ready yet? Check your rate anyway — it's free and won't affect your credit."}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 12 }}>No hard credit pull to compare rates. Takes 3 minutes. Free forever.</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {country === "CA" ? (
+                      <>
+                        <a href="https://www.ratehub.ca" target="_blank" rel="noopener noreferrer sponsored" style={{ flex: 1, minWidth: 140, padding: "10px 16px", borderRadius: 9, background: "var(--green)", color: "#fff", fontSize: 13, fontWeight: 800, textDecoration: "none", textAlign: "center", display: "block" }}>
+                          🇨🇦 Compare rates on Ratehub →
+                        </a>
+                        <a href="https://www.ratesdotca.com" target="_blank" rel="noopener noreferrer sponsored" style={{ flex: 1, minWidth: 140, padding: "10px 16px", borderRadius: 9, background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13, fontWeight: 700, textDecoration: "none", textAlign: "center", display: "block" }}>
+                          Compare on Rates.ca →
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <a href="https://www.lendingtree.com/home/mortgage" target="_blank" rel="noopener noreferrer sponsored" style={{ flex: 1, minWidth: 140, padding: "10px 16px", borderRadius: 9, background: "var(--green)", color: "#fff", fontSize: 13, fontWeight: 800, textDecoration: "none", textAlign: "center", display: "block" }}>
+                          Compare rates on LendingTree →
+                        </a>
+                        <a href="https://www.credible.com/mortgage" target="_blank" rel="noopener noreferrer sponsored" style={{ flex: 1, minWidth: 140, padding: "10px 16px", borderRadius: 9, background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", fontSize: 13, fontWeight: 700, textDecoration: "none", textAlign: "center", display: "block" }}>
+                          Check rates on Credible →
+                        </a>
+                      </>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 8, textAlign: "center" }}>
+                    Affiliate links — we may earn a commission at no cost to you
+                  </div>
+                </div>
               </div>
             </div>
           );
@@ -2109,20 +2301,31 @@ Calculated at MortgageHive.app`;
           </div>
         </div>
 
-        {/* About */}
+        {/* About + SEO */}
         <div style={{ marginTop: 32, padding: 22, background: "var(--bg2)", border: "1px solid var(--border2)", borderRadius: 14 }}>
           <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 10, color: "var(--text)" }}>About <span style={{ color: "var(--green)" }}>MortgageHive</span></div>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 10 }}>
-            MortgageHive is the most complete free mortgage calculator for Canada and the United States. Unlike other calculators, MortgageHive includes every real cost — CMHC insurance, provincial land transfer tax by province, PST on CMHC premiums, US state closing costs, PMI, taxes, insurance, HOA fees, and condo fees.
+            MortgageHive is the most complete free mortgage calculator for Canada and the United States. Unlike other mortgage payment calculators, MortgageHive includes every real cost — CMHC insurance premiums, land transfer tax by province (Ontario, BC, Quebec, Manitoba, Nova Scotia, New Brunswick, PEI, Newfoundland), PST on CMHC premiums, US state closing costs, PMI, property taxes, home insurance, HOA fees, and condo fees.
+          </p>
+          <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 10 }}>
+            Use MortgageHive to calculate your monthly mortgage payment, run the Canadian stress test, check if you qualify, compare loan scenarios, calculate mortgage renewal impact, run a refinance break-even analysis, see rent vs buy breakeven, generate a full amortization schedule, and check your debt-to-income ratio — all in one free tool.
           </p>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8 }}>
-            No signup required. No personal information collected. No spam. A complete mortgage guide in one free tool.
+            No signup required. No personal information collected. No spam. Built for first-time home buyers, newcomers to Canada, investors, and anyone making the biggest financial decision of their life.
           </p>
+          <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {["Mortgage Calculator Canada","CMHC Calculator","Land Transfer Tax Ontario","Mortgage Stress Test","Mortgage Affordability","Amortization Schedule","Rent vs Buy Canada","Mortgage Renewal Calculator","First Time Home Buyer Canada","Mortgage Calculator BC","Mortgage Calculator Alberta","Mortgage Calculator Ontario"].map(tag => (
+              <span key={tag} style={{ fontSize: 10, padding: "3px 9px", borderRadius: 20, background: "var(--bg3)", color: "var(--text3)", border: "1px solid var(--border2)" }}>{tag}</span>
+            ))}
+          </div>
         </div>
 
         <div style={{ marginTop: 24, paddingTop: 18, borderTop: "1px solid var(--border2)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 11, color: "var(--text3)" }}>
-          <span>MortgageHive · Canada & US Mortgage Calculator</span>
-          <span>Not financial advice · Consult a licensed mortgage professional</span>
+          <span>MortgageHive · Free Mortgage Calculator Canada & US</span>
+          <span style={{ textAlign: "right" }}>Not financial advice · Affiliate links may earn us a commission</span>
+        </div>
+        <div style={{ paddingTop: 8, fontSize: 10, color: "var(--text3)", lineHeight: 1.6 }}>
+          MortgageHive provides estimates only. Tax rates, CMHC premiums, and closing costs are approximate and subject to change. Always consult a licensed mortgage professional before making financial decisions. Some links on this page are affiliate links.
         </div>
       </div>
     </div>
