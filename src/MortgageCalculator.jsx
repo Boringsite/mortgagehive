@@ -269,7 +269,7 @@ function getTaxForGeoCity(city, country, provinceCode, usStateCode) {
     // Fall back to province average
     const fallbackKey = `Other ${provData.label}`;
     if (provData.cities[fallbackKey]) return { key: prov, cityKey: fallbackKey, ...provData.cities[fallbackKey] };
-    // Last resort — use first city in province
+    // Last resort: use first city in province
     const firstCity = Object.values(provData.cities)[0];
     return { key: prov, cityKey: null, ...firstCity };
   } else {
@@ -510,15 +510,15 @@ const US_PROPERTY_TAXES = {
 };
 
 const FAQ = [
-  { q: "What is CMHC insurance and do I need it in Canada?", a: "CMHC (Canada Mortgage and Housing Corporation) mortgage default insurance is required if your down payment is less than 20% of the home price. The premium ranges from 2.8% to 4% of the mortgage amount depending on your down payment. It can be added to your mortgage but in Ontario, Quebec, and Saskatchewan, the provincial sales tax on the premium must be paid in cash at closing — many first-time buyers miss this." },
+  { q: "What is CMHC insurance and do I need it in Canada?", a: "CMHC (Canada Mortgage and Housing Corporation) mortgage default insurance is required if your down payment is less than 20% of the home price. The premium ranges from 2.8% to 4% of the mortgage amount depending on your down payment. It can be added to your mortgage but in Ontario, Quebec, and Saskatchewan, the provincial sales tax on the premium must be paid in cash at closing, many first-time buyers miss this." },
   { q: "What is the minimum down payment in Canada?", a: "The minimum down payment in Canada is 5% for homes up to $500,000. For homes between $500,000 and $999,999, you need 5% on the first $500,000 and 10% on the remainder. For homes $1 million and over, you need a minimum 20% down payment and CMHC insurance is not available." },
-  { q: "What is land transfer tax in Canada?", a: "Land transfer tax is a one-time fee paid to the provincial government when you buy a home. Rates vary dramatically — Alberta, Saskatchewan, and the territories charge no land transfer tax at all, while Ontario and BC have graduated rates that can reach 2-3% on higher-priced homes. Toronto buyers pay an additional municipal land transfer tax on top of the provincial tax. First-time buyers in Ontario get up to $4,000 rebate on the provincial tax." },
+  { q: "What is land transfer tax in Canada?", a: "Land transfer tax is a one-time fee paid to the provincial government when you buy a home. Rates vary dramatically, Alberta, Saskatchewan, and the territories charge no land transfer tax at all, while Ontario and BC have graduated rates that can reach 2-3% on higher-priced homes. Toronto buyers pay an additional municipal land transfer tax on top of the provincial tax. First-time buyers in Ontario get up to $4,000 rebate on the provincial tax." },
   { q: "What closing costs should I budget for in Canada?", a: "Budget 1.5-4% of the purchase price for closing costs. This includes: land transfer tax, legal fees ($1,500-$2,500), home inspection ($300-$600), title insurance ($150-$400), property tax adjustments, utility adjustments, and moving costs. If your down payment is under 20%, add CMHC insurance and any applicable provincial sales tax." },
   { q: "What are typical US mortgage closing costs?", a: "US closing costs typically range from 2-5% of the loan amount. Major items include: loan origination fee (0.5-1%), home appraisal ($500-$1,000), title search and insurance ($600-$2,500), escrow fee ($350-$1,000), home inspection ($300-$500), recording fees ($150-$500), and prepaid expenses including property taxes, homeowners insurance, and prepaid interest. State transfer taxes vary widely." },
   { q: "What is PMI and when can I remove it in the US?", a: "Private Mortgage Insurance (PMI) is required in the US when your down payment is less than 20%. It typically costs 0.5-1.5% of the loan amount per year. Under the Homeowners Protection Act, lenders must automatically cancel PMI when your loan balance reaches 78% of the original purchase price. You can also request removal at 80% loan-to-value." },
   { q: "What is the stress test in Canada?", a: "Canada's mortgage stress test requires you to qualify at the higher of your actual mortgage rate plus 2%, or 5.25% (the Bank of Canada's minimum qualifying rate). This means even if your actual rate is 5%, you must prove you can afford payments at 7%. It applies to all insured and uninsured mortgages." },
-  { q: "What is bi-weekly vs monthly payment in Canada?", a: "Accelerated bi-weekly payments divide your monthly payment in half and pay it every two weeks — resulting in 26 half-payments per year (equivalent to 13 monthly payments). This extra payment per year can reduce a 25-year mortgage by 3-4 years and save tens of thousands in interest." },
-  { q: "What first-time buyer programs exist in Canada?", a: "Key programs include: First Home Savings Account (FHSA) — contribute up to $8,000/year tax-free, max $40,000; Home Buyers' Plan (HBP) — withdraw up to $35,000 from RRSP tax-free; First-Time Home Buyer Incentive — government co-invests 5-10% in your home; GST/HST New Housing Rebate for new builds. Provincial and municipal programs also available." },
+  { q: "What is bi-weekly vs monthly payment in Canada?", a: "Accelerated bi-weekly payments divide your monthly payment in half and pay it every two weeks, resulting in 26 half-payments per year (equivalent to 13 monthly payments). This extra payment per year can reduce a 25-year mortgage by 3-4 years and save tens of thousands in interest." },
+  { q: "What first-time buyer programs exist in Canada?", a: "Key programs include: First Home Savings Account (FHSA): contribute up to $8,000/year tax-free, max $40,000; Home Buyers' Plan (HBP): withdraw up to $35,000 from RRSP tax-free; First-Time Home Buyer Incentive, government co-invests 5-10% in your home; GST/HST New Housing Rebate for new builds. Provincial and municipal programs also available." },
   { q: "What first-time buyer programs exist in the US?", a: "Programs include: FHA loans (3.5% down, lower credit requirements); VA loans (0% down for veterans); USDA loans (0% down for rural areas); Fannie Mae HomeReady and Freddie Mac Home Possible (3% down, flexible income requirements); First-time buyer tax credit; Down payment assistance programs vary by state and city." },
 ];
 
@@ -527,7 +527,7 @@ const BUYING_STEPS = [
     phase: "Preparation",
     color: "#16a34a",
     steps: [
-      { title: "Check your credit score", desc: "Canada: 680+ for best rates. US: 620+ minimum, 740+ for best rates. Check for errors — 20% of credit reports have mistakes that hurt your score.", action: "Improve score 6 months before applying" },
+      { title: "Check your credit score", desc: "Canada: 680+ for best rates. US: 620+ minimum, 740+ for best rates. Check for errors. 20% of credit reports have mistakes that hurt your score.", action: "Improve score 6 months before applying" },
       { title: "Calculate what you can afford", desc: "Use the affordability tab. Rule of thumb: housing costs should not exceed 28% of gross income (front-end DTI). Total debts should not exceed 43% (back-end DTI).", action: "Complete the affordability check" },
       { title: "Save for down payment + closing costs", desc: "Down payment + closing costs (1.5-5% of purchase price) + emergency fund (3-6 months expenses). Most buyers underestimate closing costs.", action: "Open FHSA (Canada) or dedicated savings account" },
       { title: "Get mortgage pre-approval", desc: "A pre-approval letter shows sellers you are serious and locks in a rate for 90-120 days. Required documents: 2 years of tax returns/NOAs, pay stubs, bank statements, employment letter.", action: "Apply with 2-3 lenders and compare" },
@@ -537,10 +537,10 @@ const BUYING_STEPS = [
     phase: "House Hunting",
     color: "#0284c7",
     steps: [
-      { title: "Find a real estate agent", desc: "In Canada, the buyer's agent is typically paid by the seller. In the US, commission structures changed in 2024 — clarify upfront. Look for someone with local market knowledge.", action: "Interview 3 agents before choosing" },
+      { title: "Find a real estate agent", desc: "In Canada, the buyer's agent is typically paid by the seller. In the US, commission structures changed in 2024, clarify upfront. Look for someone with local market knowledge.", action: "Interview 3 agents before choosing" },
       { title: "Define your must-haves vs nice-to-haves", desc: "Bedrooms, bathrooms, location, school district, commute, parking, outdoor space. Be realistic about what you can afford in your target area.", action: "Create a priority list before viewing homes" },
       { title: "Research neighbourhoods", desc: "Walk scores, school ratings, crime statistics, future development plans, flood zones, noise levels, transit access. Visit at different times of day.", action: "Visit shortlisted neighbourhoods on weekdays and weekends" },
-      { title: "View multiple properties", desc: "See at least 10-15 homes before making an offer. Take notes and photos. Look past decor — focus on structure, layout, natural light, storage.", action: "Use a property comparison checklist" },
+      { title: "View multiple properties", desc: "See at least 10-15 homes before making an offer. Take notes and photos. Look past decor, focus on structure, layout, natural light, storage.", action: "Use a property comparison checklist" },
     ]
   },
   {
@@ -548,7 +548,7 @@ const BUYING_STEPS = [
     color: "#7c3aed",
     steps: [
       { title: "Research comparable sales", desc: "Your agent should provide a Comparative Market Analysis (CMA). Look at similar homes sold in last 90 days within 1km. Avoid overpaying in a cooling market.", action: "Review 5-10 recent comparable sales" },
-      { title: "Decide on offer conditions", desc: "Common conditions: subject to financing, subject to inspection, subject to sale of existing home. In hot markets, some buyers waive conditions — understand the risk.", action: "Never waive home inspection in writing without seeing it first" },
+      { title: "Decide on offer conditions", desc: "Common conditions: subject to financing, subject to inspection, subject to sale of existing home. In hot markets, some buyers waive conditions, understand the risk.", action: "Never waive home inspection in writing without seeing it first" },
       { title: "Submit your offer", desc: "Include purchase price, deposit amount (typically 5%), closing date, and any conditions. In Canada, your lawyer reviews the offer. In the US, a real estate attorney may be required by state.", action: "Allow 24-48 hours for seller response" },
       { title: "Negotiate", desc: "Sellers may counter at a higher price or different terms. Know your maximum price before entering negotiations. Consider asking for appliances, closing cost help, or repair credits.", action: "Stick to your pre-approved budget" },
     ]
@@ -557,9 +557,9 @@ const BUYING_STEPS = [
     phase: "Due Diligence",
     color: "#d97706",
     steps: [
-      { title: "Home inspection", desc: "A licensed inspector checks structure, roof, foundation, electrical, plumbing, HVAC, insulation. Cost: $300-$600. Never skip this. Major issues found: negotiate price reduction or repairs.", action: "Attend the inspection in person — ask questions" },
-      { title: "Property appraisal", desc: "Your lender orders an appraisal to confirm the home is worth the purchase price. If appraised value is lower than offer, you may need to renegotiate or cover the difference.", action: "Arranged by your lender — budget $500-$800" },
-      { title: "Title search", desc: "A lawyer/notary searches public records for any liens, encumbrances, or legal issues on the property. Title insurance protects you if issues are found after closing.", action: "Get owner's title insurance — it's worth it" },
+      { title: "Home inspection", desc: "A licensed inspector checks structure, roof, foundation, electrical, plumbing, HVAC, insulation. Cost: $300-$600. Never skip this. Major issues found: negotiate price reduction or repairs.", action: "Attend the inspection in person, ask questions" },
+      { title: "Property appraisal", desc: "Your lender orders an appraisal to confirm the home is worth the purchase price. Iff appraised value is lower than offer, you may need to renegotiate or cover the difference.", action: "Arranged by your lender, budget $500-$800" },
+      { title: "Title search", desc: "A lawyer/notary searches public records for any liens, encumbrances, or legal issues on the property. Title insurance protects you if issues are found after closing.", action: "Get owner's title insurance, it's worth it" },
       { title: "Review strata/condo documents (if applicable)", desc: "For condos/stratas: review meeting minutes (2 years), financial statements, depreciation report, bylaws, and special assessments. Look for deferred maintenance and pending lawsuits.", action: "Have a lawyer review condo documents" },
     ]
   },
@@ -567,9 +567,9 @@ const BUYING_STEPS = [
     phase: "Financing",
     color: "#059669",
     steps: [
-      { title: "Finalize your mortgage", desc: "Provide all required documents to your lender. They will complete underwriting — verifying income, assets, property, and credit. Avoid any major purchases or new credit during this period.", action: "Do not change jobs or make large purchases before closing" },
+      { title: "Finalize your mortgage", desc: "Provide all required documents to your lender. They will complete underwriting, verifying income, assets, property, and credit. Avoid any major purchases or new credit during this period.", action: "Do not change jobs or make large purchases before closing" },
       { title: "Lock your interest rate", desc: "Canada: most lenders offer 90-120 day rate holds. US: rate lock typically 30-60 days. In a rising rate environment, lock as early as possible.", action: "Ask your lender about rate lock terms" },
-      { title: "Get home insurance", desc: "Required by your lender before closing. Shop multiple insurers — rates vary by 30-50%. Ensure coverage includes replacement value, not market value.", action: "Get quotes from 3+ insurers" },
+      { title: "Get home insurance", desc: "Required by your lender before closing. Shop multiple insurers, rates vary by 3050%. Ensure coverage includes replacement value, not market value.", action: "Get quotes from 3+ insurers" },
       { title: "Review closing disclosure / mortgage commitment", desc: "Canada: receive mortgage commitment letter. US: receive Closing Disclosure 3 business days before closing. Review every line for errors. Compare to your original Loan Estimate.", action: "Have your lawyer review all documents" },
     ]
   },
@@ -605,12 +605,12 @@ const GLOSSARY = [
   { term: "DTI (Debt to Income)", def: "Total monthly debt payments divided by gross monthly income. Front-end: housing costs only (max 28-32%). Back-end: all debts (max 43%)." },
   { term: "Fixed Rate", def: "Your interest rate stays the same for the entire term/loan period. Predictable payments. Better when rates are expected to rise." },
   { term: "Variable Rate", def: "Your interest rate fluctuates with the prime lending rate. Lower initial rate but payments can increase. Better when rates are expected to fall." },
-  { term: "Land Transfer Tax", def: "One-time provincial/state tax paid at closing on the purchase price. Varies by province — Alberta charges nothing, Toronto charges double (provincial + municipal)." },
+  { term: "Land Transfer Tax", def: "One-time provincial/state tax paid at closing on the purchase price. Varies by provincece, Alberta charges nothing, Toronto charges double (provincial + municipal)." },
   { term: "Closing Costs", def: "One-time fees paid at closing beyond the down payment. Budget 1.5-4% of purchase price in Canada, 2-5% of loan in the US." },
   { term: "Pre-Approval", def: "Lender confirms how much they will lend based on your income, credit, and assets. Valid 90-120 days. Locks in rate in Canada." },
   { term: "Home Equity", def: "Home value minus outstanding mortgage balance. Grows as you pay down the mortgage and as the home appreciates in value." },
-  { term: "FHSA (Canada)", def: "First Home Savings Account — contribute up to $8,000/year ($40,000 lifetime), tax-deductible like RRSP, grows tax-free, withdrawn tax-free for first home." },
-  { term: "HBP (Canada)", def: "Home Buyers' Plan — withdraw up to $35,000 from RRSP tax-free for first home purchase. Must repay over 15 years." },
+  { term: "FHSA (Canada)", def: "First Home Savings Account: contribute up to $8,000/year ($40,000 lifetime), tax-deductible like RRSP, grows tax-free, withdrawn tax-free for first home." },
+  { term: "HBP (Canada)", def: "Home Buyers' Plan: withdraw up to $35,000 from RRSP tax-free for first home purchase. Must repay over 15 years." },
   { term: "Escrow (US)", def: "An account held by a third party to hold funds during the transaction. After closing, lenders may hold monthly tax and insurance payments in escrow." },
   { term: "Title Insurance", def: "Protects against losses from title defects, liens, or ownership disputes. One-time premium at closing. Highly recommended for all buyers." },
   { term: "Open vs Closed Mortgage (Canada)", def: "Open: can pay off anytime without penalty but higher rate. Closed: lower rate but prepayment penalties apply. Most buyers choose closed with prepayment privileges." },
@@ -706,7 +706,7 @@ export default function MortgageCalculator() {
     // Update document title dynamically for SEO
     const updateTitle = () => {
       const locationStr = city ? city + ", " + (prov || state || "") : (prov ? CA_PROPERTY_TAXES[prov]?.label || prov : state || "Canada & US");
-      document.title = `Mortgage Calculator — ${locationStr} | CalculateMortgageLoan.com`;
+      document.title = `Mortgage Calculator: ${locationStr} | CalculateMortgageLoan.com`;
       const metaDesc = document.querySelector("meta[name=description]");
       if (metaDesc) metaDesc.setAttribute("content",
         `Free mortgage calculator for ${locationStr}. Includes CMHC insurance, land transfer tax, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker. No signup required.`
@@ -804,7 +804,7 @@ export default function MortgageCalculator() {
   };
 
   const copy = () => {
-    const text = `MortgageHive Summary — ${country === "CA" ? province : usState}
+    const text = `CalculateMortgageLoan.com Summary: ${country === "CA" ? province : usState}
 Home Price: ${fmtC(homePrice)}
 Down Payment: ${fmtC(downAmt)} (${downPct}%)
 Loan Amount: ${fmtC(loanAmt)}
@@ -834,7 +834,7 @@ Calculated at CalculateMortgageLoan.com`;
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "MortgageHive — Canada & US Mortgage Calculator",
+        "name": "CalculateMortgageLoan.com: Canada & US Mortgage Calculator",
         "url": "https://calculatemortgageloan.com",
         "description": "Free mortgage calculator for Canada and the US. Includes CMHC insurance, land transfer tax by province, stress test, closing costs, amortization schedule, rent vs buy, and affordability checker.",
         "applicationCategory": "FinanceApplication",
@@ -907,7 +907,7 @@ Calculated at CalculateMortgageLoan.com`;
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg,#15803d,#166534)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🏠</div>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.5px" }}>Mortgage<span style={{ color: "var(--green)" }}>Hive</span></div>
+              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.5px" }}>Calculate<span style={{ color: "var(--green)" }}>MortgageLoan</span></div>
               <div style={{ fontSize: 10, color: "var(--text2)", fontWeight: 600 }}>
                 {selectedCity ? `${selectedCity} · ` : ""}{country === "CA" ? (CA_PROPERTY_TAXES[province]?.label || "Canada") : (US_PROPERTY_TAXES[usState]?.label || "US")} · Free · No signup
               </div>
@@ -979,7 +979,7 @@ Calculated at CalculateMortgageLoan.com`;
                 <div className="card">
                   <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12, color: "var(--text)" }}>Home details</div>
 
-                  {/* Location — province/state + city with auto-fill */}
+                  {/* Location: province/state + city with auto-fill */}
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                       <div>
@@ -1006,7 +1006,7 @@ Calculated at CalculateMortgageLoan.com`;
                         )}
                       </div>
                       <div style={{ position: "relative" }}>
-                        <div className="label"><span>City <span style={{ color: "var(--green)", fontSize: 10 }}>— search any city · auto-fills tax</span></span></div>
+                        <div className="label"><span>City <span style={{ color: "var(--green)", fontSize: 10 }}>search any city, auto-fills tax</span></span></div>
                         <input
                           className="num-input"
                           placeholder={`Search any ${country === "CA" ? "Canadian" : "US"} city...`}
@@ -1100,7 +1100,7 @@ Calculated at CalculateMortgageLoan.com`;
                   )}
                   {country === "CA" && (
                     <div style={{ fontSize: 11, marginBottom: 10, padding: "6px 10px", background: ltt.total === 0 ? "rgba(74,222,128,0.08)" : "rgba(0,0,0,0.06)", borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ color: "var(--text2)" }}>🏛️ Land Transfer Tax — {CA_PROPERTY_TAXES[province]?.label || province}</span>
+                      <span style={{ color: "var(--text2)" }}>🏛️ Land Transfer Tax: {CA_PROPERTY_TAXES[province]?.label || province}</span>
                       <span style={{ fontFamily: "'DM Mono',monospace", fontWeight: 800, color: ltt.total === 0 ? "var(--green)" : "var(--amber)" }}>
                         {ltt.total === 0 ? "✅ $0 (No LTT in " + (CA_PROPERTY_TAXES[province]?.label || province) + ")" : fmtC(ltt.total) + " at closing"}
                       </span>
@@ -1154,7 +1154,7 @@ Calculated at CalculateMortgageLoan.com`;
                       ))}
                     </div>
                   </div>
-                  {/* Rental inputs — only shown in rental mode */}
+                  {/* Rental inputs, only shown in rental mode */}
                   {propertyMode === "rental" && (
                     <div style={{ padding: "12px 14px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 10, marginBottom: 14 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: "#3b82f6", marginBottom: 10 }}>🏢 Rental Analysis</div>
@@ -1191,7 +1191,7 @@ Calculated at CalculateMortgageLoan.com`;
                               </div>
                             ))}
                             <div style={{ marginTop: 8, fontSize: 11, color: "#3b82f6", lineHeight: 1.6 }}>
-                              {cashFlow >= 0 ? "✅ Positive cash flow — this property generates income above costs." : `⚠️ Negative cash flow of ${fmtC(Math.abs(cashFlow))}/mo — you'll need to supplement from other income.`}
+                              {cashFlow >= 0 ? "✅ Positive cash flow. This property generates income above costs." : `⚠️ Negative cash flow of ${fmtC(Math.abs(cashFlow))}/mo, you'll need to supplement from other income.`}
                             </div>
                           </div>
                         );
@@ -1265,7 +1265,7 @@ Calculated at CalculateMortgageLoan.com`;
                     { label: "Loan amount", val: fmtC(loanAmt) },
                     ...(country === "CA" && cmhc.premium > 0 ? [{ label: "CMHC premium (added to loan)", val: fmtC(cmhc.premium), color: "var(--amber)" }] : []),
                     { label: "Total interest paid", val: fmtC(totalInterest), color: "var(--red)" },
-                    ...(country === "CA" ? [{ label: `Land transfer tax (${CA_PROPERTY_TAXES[province]?.label || province})`, val: ltt.total === 0 ? "✅ $0 — No LTT" : fmtC(ltt.total), color: ltt.total === 0 ? "var(--green)" : "var(--amber)" }] : []),
+                    ...(country === "CA" ? [{ label: `Land transfer tax (${CA_PROPERTY_TAXES[province]?.label || province})`, val: ltt.total === 0 ? "✅ $0, No LTT" : fmtC(ltt.total), color: ltt.total === 0 ? "var(--green)" : "var(--amber)" }] : []),
                   { label: "Total cost of home", val: fmtC(homePrice + totalInterest + (country === "CA" ? ltt.total + 1800 + 450 + 300 : usCosts?.total || 0)), color: "var(--text)" },
                   ].map(r => (
                     <div key={r.label} className="br-row">
@@ -1337,7 +1337,7 @@ Calculated at CalculateMortgageLoan.com`;
                           </div>
                         ))}
                         <div style={{ marginTop: 8, fontSize: 11, color: "var(--text3)" }}>
-                          💡 Budget 1-3% of home value per year for maintenance — most first-time buyers underestimate this significantly.
+                          💡 Budget 1-3% of home value per year for maintenance. Most first-time buyers underestimate this significantly.
                         </div>
                       </div>
                     );
@@ -1394,7 +1394,7 @@ Calculated at CalculateMortgageLoan.com`;
               <div className="grid2">
                 {/* Land Transfer Tax */}
                 <div className="card">
-                  <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "var(--text)" }}>Land Transfer Tax — {CA_PROVINCES.find(p => p.code === province)?.name}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "var(--text)" }}>Land Transfer Tax: {CA_PROVINCES.find(p => p.code === province)?.name}</div>
                   {province === "AB" || province === "SK" || province === "NT" || province === "NU" || province === "YT" ? (
                     <div style={{ padding: "12px", background: "rgba(74,222,128,0.08)", borderRadius: 8, border: "1px solid var(--border)" }}>
                       <div style={{ fontSize: 24, fontWeight: 900, color: "var(--green)", fontFamily: "'DM Mono',monospace" }}>$0</div>
@@ -1416,7 +1416,7 @@ Calculated at CalculateMortgageLoan.com`;
                       ))}
                       {isFirstTime && (province === "ON" || province === "BC" || province === "MB" || province === "PE") && (
                         <div style={{ marginTop: 8, padding: "8px 10px", background: "var(--green-dim)", borderRadius: 6, fontSize: 12, color: "var(--green)", fontWeight: 600 }}>
-                          ✅ First-time buyer rebate applied — you save {fmtC(ltt.provincialRebate + ltt.municipalRebate)}
+                          ✅ First-time buyer rebate applied. You save {fmtC(ltt.provincialRebate + ltt.municipalRebate)}
                         </div>
                       )}
                     </>
@@ -1429,7 +1429,7 @@ Calculated at CalculateMortgageLoan.com`;
                   {downPct >= 20 ? (
                     <div style={{ padding: "12px", background: "rgba(74,222,128,0.08)", borderRadius: 8, border: "1px solid var(--border)" }}>
                       <div style={{ fontSize: 24, fontWeight: 900, color: "var(--green)", fontFamily: "'DM Mono',monospace" }}>$0</div>
-                      <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 4 }}>✅ 20%+ down payment — no CMHC insurance required</div>
+                      <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 4 }}>✅ 20%+ down payment, no CMHC insurance required</div>
                     </div>
                   ) : homePrice > 1500000 ? (
                     <div style={{ padding: "12px", background: "rgba(239,68,68,0.06)", borderRadius: 8 }}>
@@ -1450,7 +1450,7 @@ Calculated at CalculateMortgageLoan.com`;
                       ))}
                       {cmhc.tax > 0 && (
                         <div style={{ marginTop: 8, padding: "8px 10px", background: "rgba(239,68,68,0.08)", borderRadius: 6, fontSize: 12, color: "var(--red)" }}>
-                          ⚠️ The {fmtC(cmhc.tax)} PST must be paid in cash at closing — it cannot be added to your mortgage. Many first-time buyers miss this!
+                          ⚠️ The {fmtC(cmhc.tax)} PST must be paid in cash at closing, it cannot be added to your mortgage. Many first-time buyerss miss this!
                         </div>
                       )}
                     </>
@@ -1520,7 +1520,7 @@ Calculated at CalculateMortgageLoan.com`;
                       { name: "Home Buyers' Plan (HBP)", detail: "Withdraw up to $35,000 from RRSP tax-free. Must repay over 15 years starting 2 years after withdrawal.", badge: "RRSP", color: "#0284c7" },
                       { name: "First-Time Home Buyer Tax Credit", detail: "Non-refundable federal tax credit of $10,000 (15% × $10,000 = $1,500 tax savings). Claim on your tax return.", badge: "Federal", color: "#7c3aed" },
                       { name: "GST/HST New Housing Rebate", detail: "Rebate of up to 36% of the GST or federal portion of the HST paid on new construction homes. Maximum $6,300.", badge: "New builds", color: "#d97706" },
-                      { name: "Land Transfer Tax Rebate", detail: isFirstTime && (province === "ON" || province === "BC" || province === "MB" || province === "PE") ? `You qualify for ${fmtC(ltt.provincialRebate + ltt.municipalRebate)} rebate in ${province}!` : `Check your province — Ontario up to $4,000, Toronto up to $8,475 combined`, badge: "Provincial", color: "#059669" },
+                      { name: "Land Transfer Tax Rebate", detail: isFirstTime && (province === "ON" || province === "BC" || province === "MB" || province === "PE") ? `You qualify for ${fmtC(ltt.provincialRebate + ltt.municipalRebate)} rebate in ${province}!` : `Check your province, Ontario up to $4,000, Toronto up to $8,475 combined`, badge: "Provincial", color: "#059669" },
                     ].map(p => (
                       <div key={p.name} style={{ background: "var(--bg3)", borderRadius: 10, padding: "14px", borderLeft: `3px solid ${p.color}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
@@ -1684,7 +1684,7 @@ Calculated at CalculateMortgageLoan.com`;
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.color, flexShrink: 0 }} />
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{c.range} — {c.label}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{c.range}, {c.label}</div>
                           <div style={{ fontSize: 11, color: "var(--text3)" }}>{c.detail}</div>
                         </div>
                       </div>
@@ -1850,7 +1850,7 @@ Calculated at CalculateMortgageLoan.com`;
                         <div style={{ marginTop: 10, padding: "8px 10px", background: monthlySavings > 0 && (breakEvenMonths || 0) < 24 ? "var(--green-dim)" : "rgba(245,158,11,0.08)", borderRadius: 8, fontSize: 12, color: monthlySavings > 0 && (breakEvenMonths || 0) < 24 ? "var(--green)" : "var(--amber)" }}>
                           {monthlySavings <= 0 ? "⚠️ Refinancing increases your payment at this rate. Consider waiting for rates to fall further." :
                             !breakEvenMonths ? "✅ Immediate savings with no penalty." :
-                            breakEvenMonths < 24 ? `✅ Strong candidate for refinancing — you break even in under 2 years.` :
+                            breakEvenMonths < 24 ? `✅ Strong candidate for refinancing, you break even in under 2 years.` :
                             `⚠️ Break-even takes ${breakEvenMonths} months. Only worthwhile if you plan to stay long-term.`}
                         </div>
                       </div>
@@ -1878,7 +1878,7 @@ Calculated at CalculateMortgageLoan.com`;
                       <div style={{ marginBottom: 14 }}>
                         <div className="label"><span>Rate reduction per point</span><span className="val">{pointsRateReduction}%</span></div>
                         <input type="range" className="range" min={0.1} max={0.5} step={0.05} value={pointsRateReduction} onChange={e => setPointsRateReduction(+e.target.value)} />
-                        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>Standard is 0.25% per point — ask your lender for their exact rate</div>
+                        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 3 }}>Standard is 0.25% per point. Ask your lender for their exact rate</div>
                       </div>
                     </div>
                     <div>
@@ -1913,8 +1913,8 @@ Calculated at CalculateMortgageLoan.com`;
                           color: bd.breakEvenMonths && bd.breakEvenMonths < years * 6 ? "var(--green)" : "var(--amber)" }}>
                           {points === 0 ? "Add points above to see the analysis." :
                             !bd.breakEvenMonths ? "⚠️ No savings from buying points at these settings." :
-                            bd.breakEvenMonths < 36 ? `✅ Strong buy — you break even in under 3 years and save ${fmtC(bd.lifetimeSavings)} over the loan.` :
-                            bd.breakEvenMonths < 60 ? `✅ Good buy — break even in ${(bd.breakEvenMonths/12).toFixed(1)} years. Worth it if you plan to stay.` :
+                            bd.breakEvenMonths < 36 ? `✅ Strong buy. You break even in under 3 years and save ${fmtC(bd.lifetimeSavings)} over the loan.` :
+                            bd.breakEvenMonths < 60 ? `✅ Good buy. Break even in ${(bd.breakEvenMonths/12).toFixed(1)} years. Worth it if you plan to stay.` :
                             `⚠️ Break-even takes ${(bd.breakEvenMonths/12).toFixed(1)} years. Only worth it if you stay long-term.`}
                         </div>
                       </div>
@@ -1924,12 +1924,12 @@ Calculated at CalculateMortgageLoan.com`;
               );
             })()}
 
-            {/* Original scenario comparison — shown when compareMode === "scenarios" */}
+            {/* Original scenario comparison, shown when compareMode === "scenarios" */}
             {compareMode === "scenarios" && (
             <>
             <div className="grid2">
               <div className="card" style={{ border: "2px solid var(--green)" }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--green)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario A — Current</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--green)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario A: Current</div>
                 <div style={{ fontSize: 36, fontWeight: 900, color: "var(--green)", fontFamily: "'DM Mono',monospace", marginBottom: 4 }}>{fmtC(pi)}<span style={{ fontSize: 14 }}>/mo</span></div>
                 <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 14 }}>{rate}% · {years}-year · {fmtC(loanAmt)} loan</div>
                 {[
@@ -1942,7 +1942,7 @@ Calculated at CalculateMortgageLoan.com`;
               </div>
 
               <div className="card">
-                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--gold)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario B — Compare</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--gold)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>Scenario B: Compare</div>
                 <div style={{ fontSize: 36, fontWeight: 900, color: "var(--gold)", fontFamily: "'DM Mono',monospace", marginBottom: 8 }}>{fmtC(comparePI)}<span style={{ fontSize: 14 }}>/mo</span></div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <div style={{ flex: 1 }}>
@@ -1990,7 +1990,7 @@ Calculated at CalculateMortgageLoan.com`;
               <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--bg3)", border: "1px solid var(--border2)", borderRadius: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>💡 Get a real rate for Scenario B</div>
-                  <div style={{ fontSize: 12, color: "var(--text2)" }}>Compare personalized rates from multiple lenders — free, no hard credit check.</div>
+                  <div style={{ fontSize: 12, color: "var(--text2)" }}>Compare personalized rates from multiple lenders. Free, no hard credit check.</div>
                 </div>
                 <a href={country === "CA" ? "https://www.ratehub.ca" : "https://www.credible.com/mortgage"} target="_blank" rel="noopener noreferrer sponsored"
                   style={{ padding: "8px 16px", borderRadius: 8, background: "var(--green)", color: "#fff", fontSize: 12, fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>
@@ -2075,7 +2075,7 @@ Calculated at CalculateMortgageLoan.com`;
         {tab === "amortization" && (
           <div className="fade-in">
             <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Amortization Schedule & Extra Payments</div>
-            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 16 }}>See how your loan is paid off over time — and how extra payments could save you years and thousands of dollars.</p>
+            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 16 }}>See how your loan is paid off over time and how extra payments could save you years and thousands of dollars.</p>
 
             {/* Extra payment calculator */}
             <div className="card" style={{ marginBottom: 14, border: "1px solid rgba(74,222,128,0.25)" }}>
@@ -2158,7 +2158,7 @@ Calculated at CalculateMortgageLoan.com`;
         {tab === "steps" && (
           <div className="fade-in">
             <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Complete Home Buying Guide</div>
-            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>Every step from preparation to closing day — for {country === "CA" ? "Canadian" : "US"} buyers. Click any step for details.</p>
+            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>Every step from preparation to closing day, for {country === "CA" ? "Canadian" : "US"} buyers. Click any step for details.</p>
             {BUYING_STEPS.map((phase, pi) => (
               <div key={phase.phase} style={{ marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -2197,7 +2197,7 @@ Calculated at CalculateMortgageLoan.com`;
         {tab === "glossary" && (
           <div className="fade-in">
             <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>Mortgage Glossary</div>
-            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>Every term explained in plain English — no jargon, no confusion.</p>
+            <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>Every term explained in plain English. No jargon, no confusion.</p>
             <div className="card">
               {GLOSSARY.map((item, i) => (
                 <div key={item.term} className="faq-item">
@@ -2214,7 +2214,7 @@ Calculated at CalculateMortgageLoan.com`;
 
         {/* ── QUALIFICATION REPORT ── */}
         {(() => {
-          const creditOk = true; // User doesn't enter credit score — assume they know
+          const creditOk = true; // User does not enter credit score, assume they know
           const frontDTIOk = frontDTI <= (country === "CA" ? 32 : 28);
           const backDTIOk = backDTI <= 44;
           const stressOk = country !== "CA" || stressTestDTI <= 44;
@@ -2230,11 +2230,11 @@ Calculated at CalculateMortgageLoan.com`;
           if (downPct < 20 && country === "CA") issues.push({ type: "warn", icon: "⚠️", title: "CMHC insurance required", detail: `CMHC adds ${fmtC(cmhc.premium)} to your mortgage. ${cmhc.tax > 0 ? `Plus ${fmtC(cmhc.tax)} PST due in cash at closing in ${province}.` : ""}`, impact: "Low" });
 
           const strengths = [];
-          if (frontDTIOk) strengths.push({ icon: "✅", text: `Front-end DTI ${frontDTI.toFixed(1)}% — within lender guidelines` });
-          if (backDTIOk) strengths.push({ icon: "✅", text: `Total DTI ${backDTI.toFixed(1)}% — lenders will likely approve` });
+          if (frontDTIOk) strengths.push({ icon: "✅", text: `Front-end DTI ${frontDTI.toFixed(1)}%, within lender guidelines` });
+          if (backDTIOk) strengths.push({ icon: "✅", text: `Total DTI ${backDTI.toFixed(1)}%, lenders will likely approve` });
           if (stressOk && country === "CA") strengths.push({ icon: "✅", text: `Passes Canadian stress test at ${Math.max(rate + 2, 5.25).toFixed(2)}%` });
-          if (downPct >= 20) strengths.push({ icon: "✅", text: `20%+ down payment — no CMHC or PMI required` });
-          if (isFirstTime) strengths.push({ icon: "✅", text: `First-time buyer — eligible for all government programs` });
+          if (downPct >= 20) strengths.push({ icon: "✅", text: `20%+ down payment. No CMHC or PMI required` });
+          if (isFirstTime) strengths.push({ icon: "✅", text: `First-time buyer, eligible for all government programs` });
 
           return (
             <div style={{ marginTop: 32, marginBottom: 32, border: `2px solid ${overallOk ? "var(--green)" : "var(--red)"}`, borderRadius: 16, overflow: "hidden" }}>
@@ -2242,7 +2242,7 @@ Calculated at CalculateMortgageLoan.com`;
               <div style={{ background: overallOk ? "linear-gradient(135deg,#15803d,#166534)" : "linear-gradient(135deg,#991b1b,#7f1d1d)", padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 3 }}>
-                    {overallOk ? "✅ Likely to Qualify" : "❌ May Not Qualify"} — Lender Assessment
+                    {overallOk ? "✅ Likely to Qualify" : "❌ May Not Qualify"}: Lender Assessment
                   </div>
                   <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
                     Based on your numbers · Not a guarantee · Get pre-approved for a firm answer
@@ -2313,14 +2313,14 @@ Calculated at CalculateMortgageLoan.com`;
                 {/* Action plan */}
                 <div style={{ padding: "14px 16px", background: "var(--bg3)", borderRadius: 10, borderLeft: `3px solid ${overallOk ? "var(--green)" : "var(--amber)"}` }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>
-                    {overallOk ? "🎯 You look good — here's what to do next:" : "📋 Recommended action plan:"}
+                    {overallOk ? "🎯 You look good. Here is what to do next:" : "📋 Recommended action plan:"}
                   </div>
                   {overallOk ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }}>
                       {[
                         { step: "1", text: "Get pre-approved with 2-3 lenders and compare rates" },
                         { step: "2", text: "Gather documents: 2 yrs tax returns, pay stubs, bank statements" },
-                        { step: "3", text: country === "CA" ? "Open FHSA if first-time buyer — contribute up to $8,000" : "Explore DPA programs in your state" },
+                        { step: "3", text: country === "CA" ? "Open FHSA if first-time buyer. Contribute up to $8,000" : "Explore DPA programs in your state" },
                         { step: "4", text: "Lock your rate once pre-approved in a rising rate environment" },
                       ].map(a => (
                         <div key={a.step} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -2334,7 +2334,7 @@ Calculated at CalculateMortgageLoan.com`;
                       {issues.filter(i => i.type === "fail").concat(issues.filter(i => i.type === "warn")).slice(0, 4).map((issue, i) => (
                         <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                           <div style={{ width: 20, height: 20, borderRadius: "50%", background: issue.type === "fail" ? "var(--red)" : "var(--amber)", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</div>
-                          <span style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.55 }}>{issue.title} — {issue.detail.split(".")[0]}.</span>
+                          <span style={{ fontSize: 12, color: "var(--text2)", lineHeight: 1.55 }}>{issue.title}, {issue.detail.split(".")[0]}.</span>
                         </div>
                       ))}
                     </div>
@@ -2345,10 +2345,10 @@ Calculated at CalculateMortgageLoan.com`;
                   This assessment is based on standard lender guidelines. Actual approval depends on your credit score, employment history, and individual lender criteria. Always get pre-approved for a firm answer.
                 </div>
 
-                {/* HIGH-VALUE AFFILIATE PLACEMENT — Get Pre-Approved */}
+                {/* HIGH-VALUE AFFILIATE PLACEMENT: Get Pre-Approved */}
                 <div style={{ marginTop: 16, padding: "16px 18px", background: lm ? "linear-gradient(135deg,#f0fdf4,#e8f5e9)" : "linear-gradient(135deg,#0d2010,#111f12)", border: "1px solid var(--border)", borderRadius: 12 }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
-                    {overallOk ? "✅ Ready to get pre-approved? Compare real rates from multiple lenders." : "📋 Not ready yet? Check your rate anyway — it's free and won't affect your credit."}
+                    {overallOk ? "✅ Ready to get pre-approved? Compare real rates from multiple lenders." : "📋 Not ready yet? Check your rate anyway. It is free and won't affect your credit."}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 12 }}>No hard credit pull to compare rates. Takes 3 minutes. Free forever.</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -2373,7 +2373,7 @@ Calculated at CalculateMortgageLoan.com`;
                     )}
                   </div>
                   <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 8, textAlign: "center" }}>
-                    Affiliate links — we may earn a commission at no cost to you
+                    Affiliate links: we may earn a commission at no cost to you
                   </div>
                 </div>
               </div>
@@ -2383,9 +2383,9 @@ Calculated at CalculateMortgageLoan.com`;
 
         {/* ── WHITE LABEL EMBED ── */}
         <div style={{ marginTop: 40, padding: 22, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14 }}>
-          <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>📦 Embed MortgageHive on Your Website</div>
+          <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 4, color: "var(--text)" }}>📦 Embed This Calculator on Your Website</div>
           <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 14, lineHeight: 1.7 }}>
-            Realtors, mortgage brokers, and finance blogs — add the most complete mortgage calculator to your site. Free embed with MortgageHive branding, or contact us for white-label licensing with your own branding.
+            Realtors, mortgage brokers, and finance blogs: add the most complete mortgage calculator to your site. Free embed with CalculateMortgageLoan.com branding, or contact us for white-label licensing with your own branding.
           </p>
           <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", fontFamily: "'DM Mono',monospace", fontSize: 11, color: "var(--green)", wordBreak: "break-all", marginBottom: 10 }}>
             {`<iframe src="https://calculatemortgageloan.com${country === "CA" ? "?country=CA&province=" + province : "?country=US&state=" + usState}" width="100%" height="700" frameborder="0" style="border-radius:12px;border:none"></iframe>`}
@@ -2399,7 +2399,7 @@ Calculated at CalculateMortgageLoan.com`;
             }} className="action-btn" style={{ padding: "8px 18px", background: "var(--green)", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
               {copied === "embed" ? "✓ Copied!" : "Copy embed code"}
             </button>
-            <a href="mailto:hello@docvaultpro.com?subject=MortgageHive White-Label License" style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid var(--border)", color: "var(--text2)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            <a href="mailto:hello@docvaultpro.com?subject=CalculateMortgageLoan White-Label License" style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid var(--border)", color: "var(--text2)", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
               💼 Enquire about white-label →
             </a>
           </div>
@@ -2426,12 +2426,12 @@ Calculated at CalculateMortgageLoan.com`;
 
         {/* About + SEO */}
         <div style={{ marginTop: 32, padding: 22, background: "var(--bg2)", border: "1px solid var(--border2)", borderRadius: 14 }}>
-          <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 10, color: "var(--text)" }}>About <span style={{ color: "var(--green)" }}>MortgageHive</span></div>
+          <div style={{ fontSize: 17, fontWeight: 900, marginBottom: 10, color: "var(--text)" }}>About <span style={{ color: "var(--green)" }}>CalculateMortgageLoan.com</span></div>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 10 }}>
-            MortgageHive is the most complete free mortgage calculator for Canada and the United States. Unlike other mortgage payment calculators, MortgageHive includes every real cost — CMHC insurance premiums, land transfer tax by province (Ontario, BC, Quebec, Manitoba, Nova Scotia, New Brunswick, PEI, Newfoundland), PST on CMHC premiums, US state closing costs, PMI, property taxes, home insurance, HOA fees, and condo fees.
+            CalculateMortgageLoan.com is the most complete free mortgage calculator for Canada and the United States. Unlike other mortgage payment calculators, CalculateMortgageLoan.com includes every real cost, CMHC insurance premiums, land transfer tax by province (Ontario, BC, Quebec, Manitoba, Nova Scotia, New Brunswick, PEI, Newfoundland), PST on CMHC premiums, US state closing costs, PMI, property taxes, home insurance, HOA fees, and condo fees.
           </p>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 10 }}>
-            Use MortgageHive to calculate your monthly mortgage payment, run the Canadian stress test, check if you qualify, compare loan scenarios, calculate mortgage renewal impact, run a refinance break-even analysis, see rent vs buy breakeven, generate a full amortization schedule, and check your debt-to-income ratio — all in one free tool.
+            Use CalculateMortgageLoan.com to calculate your monthly mortgage payment, run the Canadian stress test, check if you qualify, compare loan scenarios, calculate mortgage renewal impact, run a refinance break-even analysis, see rent vs buy breakeven, generate a full amortization schedule, and check your debt-to-income ratio, all in one free tool.
           </p>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8 }}>
             No signup required. No personal information collected. No spam. Built for first-time home buyers, newcomers to Canada, investors, and anyone making the biggest financial decision of their life.
@@ -2457,11 +2457,11 @@ Calculated at CalculateMortgageLoan.com`;
         </div>
 
         <div style={{ marginTop: 24, paddingTop: 18, borderTop: "1px solid var(--border2)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 11, color: "var(--text3)" }}>
-          <span>MortgageHive · Free Mortgage Calculator Canada & US</span>
+          <span>CalculateMortgageLoan.com · Free Mortgage Calculator Canada & US</span>
           <span style={{ textAlign: "right" }}>Not financial advice · Affiliate links may earn us a commission</span>
         </div>
         <div style={{ paddingTop: 8, fontSize: 10, color: "var(--text3)", lineHeight: 1.6 }}>
-          MortgageHive provides estimates only. Tax rates, CMHC premiums, and closing costs are approximate and subject to change. Always consult a licensed mortgage professional before making financial decisions. Some links on this page are affiliate links.
+          CalculateMortgageLoan.com provides estimates only. Tax rates, CMHC premiums, and closing costs are approximate and subject to change. Always consult a licensed mortgage professional before making financial decisions. Some links on this page are affiliate links.
         </div>
       </div>
     </div>
