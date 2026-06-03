@@ -1,60 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- Main page -->
-  <url>
-    <loc>https://calculatemortgageloan.com/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!-- Canada province pages -->
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=BC</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=AB</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=QC</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=MB</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=SK</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=NS</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=NB</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=NL</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=PE</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-
-  <!-- Canada city pages — highest traffic -->
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Toronto</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=BC&amp;city=Vancouver</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=AB&amp;city=Calgary</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=AB&amp;city=Edmonton</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=QC&amp;city=Montreal</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Ottawa</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Mississauga</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Hamilton</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=BC&amp;city=Victoria</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=NS&amp;city=Halifax</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=MB&amp;city=Winnipeg</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=SK&amp;city=Saskatoon</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Owen+Sound</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=CA&amp;province=ON&amp;city=Cornwall</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-
-  <!-- US state pages — highest traffic -->
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=CA</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=TX</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=FL</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=NY</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=WA</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=CO</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=AZ</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=GA</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=NC</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=OH</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=IL</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=PA</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-
-  <!-- US city pages -->
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=CA&amp;city=Los+Angeles</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=TX&amp;city=Houston</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=TX&amp;city=Austin</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=FL&amp;city=Miami</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://calculatemortgageloan.com/?country=US&amp;state=NY&amp;city=New+York+City</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-
+<url>
+<loc>https://calculatemortgageloan.com/</loc>
+<lastmod>2026-06-02</lastmod>
+<changefreq>monthly</changefreq>
+<priority>1.0</priority>
+</url>
 </urlset>
